@@ -3577,7 +3577,7 @@
   "validate_endpoint_error": "Введите корректный URL",
   "variables": "Переменные",
   "version": "Версия",
-  "version_announcement_closing": "Твой друг Пьер",
+  "version_announcement_closing": "Твой друг Pierre",
   "version_announcement_message": "Здравствуйте! Доступна новая версия приложения. Пожалуйста, прочтите <link>заметки к выпуску</link> и убедитесь, что параметры конфигурации актуальны, дабы избежать ошибок, особенно если используется WatchTower или другой механизм автоматического обновления приложения.",
   "version_history": "История версий",
   "version_history_item": "Версия {version} установлена {date}",
