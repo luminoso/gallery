@@ -226,6 +226,13 @@ const rows: Row[] = [
     expected: { timelineSpaceIds: [spaceId] },
   },
   {
+    name: 'map: withSharedSpaces widens',
+    surface: 'map',
+    request: { withSharedSpaces: true },
+    queriesSpaces: true,
+    expected: { timelineSpaceIds: [spaceId] },
+  },
+  {
     name: 'map: neither switch, no lookup',
     surface: 'map',
     request: {},
@@ -274,7 +281,7 @@ const rows: Row[] = [
   {
     name: 'filtered-map: a space scope is never widened',
     surface: 'filtered-map',
-    request: { spaceId, spacePersonIds: ['space-person'] },
+    request: { spaceId, withSharedSpaces: true, spacePersonIds: ['space-person'] },
     queriesSpaces: false,
     expected: { spacePersonIds: ['space-person'] },
   },
@@ -368,6 +375,30 @@ describe('resolveViewerScope', () => {
     const scope = await resolveViewerScope(repos, authFor(), 'search', { personIds: [scopedToken] });
 
     expect(scope.forceEmptyResult).toBe(true);
+  });
+
+  // The other half of the map drift fix: a bare id under withSharedSpaces is looked up among the
+  // viewer's OWN people, so one that is not theirs is inaccessible and empties the map, as it already
+  // did on timeline and search. It used to pass through as a legacy id and could pin other members'
+  // assets carrying that face through the widened space arm.
+  it('filtered-map empties the result for a bare id under withSharedSpaces that is not the viewer’s person', async () => {
+    const { repos, faceIdentityRepository } = setup();
+    faceIdentityRepository.resolveScopedPersonTokens.mockResolvedValue({
+      identityIds: [],
+      legacyPersonIds: [],
+      legacySpacePersonIds: [],
+      hasInaccessibleToken: true,
+    });
+
+    const scope = await resolveViewerScope(repos, authFor(), 'filtered-map', {
+      withSharedSpaces: true,
+      personIds: [personId],
+    });
+
+    expect(faceIdentityRepository.resolveScopedPersonTokens).toHaveBeenCalledWith(
+      expect.objectContaining({ tokens: [personId], scope: expect.objectContaining({ withSharedSpaces: true }) }),
+    );
+    expect(scope).toMatchObject({ personIds: [], forceEmptyResult: true });
   });
 
   it('re-resolves inside the caller’s transaction', async () => {

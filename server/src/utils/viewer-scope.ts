@@ -148,7 +148,10 @@ const isPersonalTimeline = (request: ViewerScopeRequest) =>
   request.visibility !== AssetVisibility.Hidden &&
   request.visibility !== AssetVisibility.Locked;
 
-/** Only search carries a visibility default; every other surface leaves the caller's visibility alone. */
+/**
+ * Only search carries a visibility default; every other surface leaves the caller's visibility alone.
+ * Typed per surface so a surface's scope can be spread straight into its own options type.
+ */
 export type ViewerScopeFor<S extends ViewerSurface> = S extends 'search'
   ? ViewerScope
   : Omit<ViewerScope, 'visibility'>;
@@ -192,27 +195,18 @@ export const resolveViewerScope = async <S extends ViewerSurface>(
     return spaceIds;
   };
 
-  let hiddenScope: TimelineHiddenScope | undefined;
-  let visibleSpaceIds: string[] | undefined;
-  if (rule.hidden === 'always') {
-    [hiddenScope, visibleSpaceIds] = await Promise.all([
-      repos.sharedSpaceRepository.getTimelineHiddenScope(userId, db),
-      getSpaceIds(),
-    ]);
-  } else {
-    // Only a `space-person:` token is checked against the timeline spaces; bare ids never are.
-    if (rule.widen || (rule.peopleSeeSpaces && hasScopedTokens)) {
-      await getSpaceIds();
-    }
-    if (rule.hidden === 'personal' && isPersonalTimeline(request)) {
-      hiddenScope = await repos.sharedSpaceRepository.getTimelineHiddenScope(userId, db);
-      // §3's rescue needs the visible spaces even when this browse is not merging space content
-      // (E12b/E12c) — but only for a caller who has actually hidden something.
-      if (!timelineHiddenScopeIsEmpty(hiddenScope)) {
-        visibleSpaceIds = await getSpaceIds();
-      }
-    }
-  }
+  const always = rule.hidden === 'always';
+  const subtract = always || (rule.hidden === 'personal' && isPersonalTimeline(request));
+  // Only a `space-person:` token is checked against the timeline spaces; bare ids never are.
+  const needsSpaces = always || rule.widen || (rule.peopleSeeSpaces && hasScopedTokens);
+  const [hiddenScope] = await Promise.all([
+    subtract ? repos.sharedSpaceRepository.getTimelineHiddenScope(userId, db) : undefined,
+    needsSpaces ? getSpaceIds() : undefined,
+  ]);
+  // §3's rescue needs the visible spaces even when this browse is not merging space content
+  // (E12b/E12c). The timeline only looks them up for a caller who has actually hidden something.
+  const visibleSpaceIds =
+    always || (hiddenScope && !timelineHiddenScopeIsEmpty(hiddenScope)) ? await getSpaceIds() : undefined;
 
   const nonEmptySpaceIds = spaceIds?.length ? spaceIds : undefined;
   const scope: ViewerScope = {
