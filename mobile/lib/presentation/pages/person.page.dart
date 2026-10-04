@@ -82,7 +82,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     // space (read-only until the spaces list resolves). A read-only Space person gets no edit
     // affordances.
     final spaceId = _person.spaceId;
-    final editable = spaceId == null ? true : ref.watch(driftSpaceEditableProvider(spaceId)).value ?? false;
+    final editable = spaceId == null ? true : ref.watch(driftSpaceEditableProvider(spaceId)).valueOrNull ?? false;
 
     return TimelineRouteScope(
       // A personal person reads the owner-scoped local timeline; a Space-shared person reads

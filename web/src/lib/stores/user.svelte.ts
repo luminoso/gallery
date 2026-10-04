@@ -7,7 +7,10 @@ import type {
   SharedSpaceResponseDto,
 } from '@immich/sdk';
 import { getAllSpaces } from '@immich/sdk';
+import { t } from 'svelte-i18n';
+import { get } from 'svelte/store';
 import { eventManager } from '$lib/managers/event-manager.svelte';
+import { handleError } from '$lib/utils/handle-error';
 
 interface UserInteractions {
   recentAlbums?: AlbumResponseDto[];
@@ -29,19 +32,21 @@ const defaultUserInteraction: UserInteractions = {
 
 export const userInteraction = $state<UserInteractions>(defaultUserInteraction);
 
+// Module state: a test that leaves getAllSpaces pending blocks loadSpaces for the rest of its file.
 let spacesRequest: Promise<void> | undefined;
 
 const fetchSpaces = async () => {
   try {
     userInteraction.recentSpaces = await getAllSpaces();
-  } catch {
-    // Left unknown; the next loadSpaces call retries.
+  } catch (error) {
+    // Left unknown (space people stay read-only); the next loadSpaces call retries.
+    handleError(error, get(t)('failed_to_load_spaces'));
   } finally {
     spacesRequest = undefined;
   }
 };
 
-/** Fills the shared spaces-list cache (also read by the sidebar) unless it is already there or on its way. */
+/** Fills the shared spaces-list cache (sidebar and People pages) unless it is already there or on its way. */
 export const loadSpaces = () => {
   if (!userInteraction.recentSpaces && !spacesRequest) {
     spacesRequest = fetchSpaces();

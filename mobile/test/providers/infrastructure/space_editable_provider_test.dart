@@ -65,13 +65,19 @@ void main() {
     expect(await containerFor(null).read(driftSpaceEditableProvider('space-3').future), isFalse);
   });
 
+  test('a failed spaces list is not editable instead of erroring', () async {
+    when(() => repo.getAll()).thenThrow(Exception('offline'));
+
+    expect(await containerFor(_user('user-2')).read(driftSpaceEditableProvider('space-3').future), isFalse);
+  });
+
   test('has no value while the spaces list loads, then resolves', () async {
     final spaces = Completer<List<SharedSpaceResponseDto>>();
     when(() => repo.getAll()).thenAnswer((_) => spaces.future);
     final container = containerFor(_user('user-2'));
 
-    // Callers read `.value ?? false`, so the loading state offers no edit affordances.
-    expect(container.read(driftSpaceEditableProvider('space-3')).value, isNull);
+    // Callers read `.valueOrNull ?? false`, so the loading state offers no edit affordances.
+    expect(container.read(driftSpaceEditableProvider('space-3')).valueOrNull, isNull);
 
     spaces.complete([SharedSpaceStub.spaceWithMembers]);
     expect(await container.read(driftSpaceEditableProvider('space-3').future), isTrue);
