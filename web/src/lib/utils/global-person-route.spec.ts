@@ -119,27 +119,35 @@ describe('person scope: which action', () => {
     vi.mocked(updateSpacePerson).mockResolvedValue({ ...spaceRef, name: 'Bea', isHidden: true } as never);
   });
 
+  const personal = {
+    endpoint: updatePerson,
+    other: updateSpacePerson,
+    hide: { id: 'person-1', personUpdateDto: { isHidden: true } },
+    rename: { id: 'person-1', personUpdateDto: { name: 'Bea' } },
+  };
+  const space = {
+    endpoint: updateSpacePerson,
+    other: updatePerson,
+    hide: spaceWrite({ isHidden: true }),
+    rename: spaceWrite({ name: 'Bea' }),
+  };
+
   it.each([
+    { scope: 'personal', row: person(), favorite: true, unfavorite: false, ...personal },
+    { scope: 'personal favorite', row: person({ isFavorite: true }), favorite: false, unfavorite: true, ...personal },
+    { scope: 'space', row: person({ primaryProfile: spaceProfile }), favorite: false, unfavorite: false, ...space },
     {
-      scope: 'personal',
-      row: person(),
-      favorite: true,
-      endpoint: updatePerson,
-      hide: { id: 'person-1', personUpdateDto: { isHidden: true } },
-      rename: { id: 'person-1', personUpdateDto: { name: 'Bea' } },
-    },
-    {
-      scope: 'space',
-      row: person({ primaryProfile: spaceProfile }),
+      scope: 'space favorite',
+      row: person({ primaryProfile: spaceProfile, isFavorite: true }),
       favorite: false,
-      endpoint: updateSpacePerson,
-      hide: spaceWrite({ isHidden: true }),
-      rename: spaceWrite({ name: 'Bea' }),
+      unfavorite: false,
+      ...space,
     },
-  ])('$scope: hide, favorite and edit target', async ({ row, favorite, endpoint, hide, rename }) => {
-    const { HidePerson, Favorite } = getPersonActions($t, row);
+  ])('$scope: hide, favorite and edit target', async ({ row, favorite, unfavorite, endpoint, other, hide, rename }) => {
+    const { HidePerson, Favorite, Unfavorite } = getPersonActions($t, row);
 
     expect(Favorite.$if?.()).toBe(favorite);
+    expect(Unfavorite.$if?.()).toBe(unfavorite);
     expect(HidePerson.$if?.()).toBe(true);
     await HidePerson.onAction(HidePerson);
     expect(endpoint).toHaveBeenCalledExactlyOnceWith(hide);
@@ -147,5 +155,6 @@ describe('person scope: which action', () => {
     vi.mocked(endpoint).mockClear();
     await updatePersonName(row, 'Bea');
     expect(endpoint).toHaveBeenCalledExactlyOnceWith(rename);
+    expect(other).not.toHaveBeenCalled();
   });
 });

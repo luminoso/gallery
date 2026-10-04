@@ -641,7 +641,7 @@
     <PeopleMergeSelector
       person={mergingPerson}
       getDisplayName={getMergeDisplayName}
-      getThumbnailUrl={getSpacePersonThumbnailUrl}
+      getThumbnailUrl={(candidate) => getSpacePersonThumbnailUrl(candidate)}
       loadPeople={loadMergePeople}
       {mergePeople}
       onBack={() => (mergingPerson = undefined)}

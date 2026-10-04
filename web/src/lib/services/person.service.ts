@@ -26,9 +26,6 @@ import { handleError } from '$lib/utils/handle-error';
 import { getFormatter } from '$lib/utils/i18n';
 import { getPersonFaceThumbnailUrl, getSpacePersonFaceThumbnailUrl } from '$lib/utils/people-utils';
 
-// Members of a shared space see space-scoped people whose IDs do not exist in the person table;
-// writes for those must go to the shared space endpoint instead of person.update.
-
 // Resolved per space and cached for the session; the server enforces the role on every
 // write, so membership lookup failures fail open instead of hiding working actions.
 const spaceEditableCache = new Map<string, Promise<boolean>>();

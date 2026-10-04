@@ -8,6 +8,9 @@ import { createUrl } from '$lib/utils';
 // - a space-person `primaryProfile` (people lists, search, filter suggestions).
 // A shared-space person row (SharedSpacePersonResponseDto) already is that pair.
 // Anything else is personal and addressed by its primary profile id.
+// Space person ids do not exist in the person table, so writes for them must go to the shared
+// space endpoints instead of person.update. A space-person profile without an id is treated as
+// personal rather than producing a `/people/undefined` URL.
 type ScopedPerson = {
   id: string;
   primaryProfile?: { type?: string; id?: string; spaceId?: string };

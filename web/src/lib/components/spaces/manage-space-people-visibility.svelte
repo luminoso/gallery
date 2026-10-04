@@ -20,7 +20,7 @@
     people.map((person) => ({
       id: person.id,
       displayName: person.name || '',
-      thumbnailUrl: getSpacePersonThumbnailUrl(person, person.updatedAt),
+      thumbnailUrl: getSpacePersonThumbnailUrl(person),
       isHidden: person.isHidden,
       type: person.type,
       // `species` has no shared-space equivalent — SharedSpacePersonResponseDto carries only `type`.
