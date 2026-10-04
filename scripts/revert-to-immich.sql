@@ -423,7 +423,7 @@ END $$;
 DROP INDEX IF EXISTS "idx_asset_exif_description_trigram";
 DELETE FROM "migration_overrides" WHERE "name" = 'index_idx_asset_exif_description_trigram';
 
--- 1794000000000-AddAssetLocalDateTimeIndex added a fork-only plain btree on
+-- 1797000000000-AddAssetLocalDateTimeIndex added a fork-only plain btree on
 -- asset."localDateTime" for the filter panel's taken range.
 DROP INDEX IF EXISTS "asset_localDateTime_range_idx";
 

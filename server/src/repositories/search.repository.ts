@@ -503,8 +503,9 @@ export class SearchRepository {
       .$if(!!options.authUserId, (qb) =>
         qb.select((eb) => favoriteExistsFor(eb, options.authUserId!).as('isFavoriteForUser')),
       )
-      // Fork: sorted by the same "taken" column the range filters on (src/utils/asset-filter.ts), so a
-      // date-filtered page walks asset_localDateTime_range_idx instead of scanning fileCreatedAt.
+      // Fork: sorted by local taken time (wall clock), the timeline's order and the column the taken
+      // range filters on (src/utils/asset-filter.ts). Deliberate: a date-filtered page then walks
+      // asset_localDateTime_range_idx; sorting by fileCreatedAt instead scans every newer asset.
       .orderBy('asset.localDateTime', orderDirection)
       .orderBy('asset.id', orderDirection)
       .limit(pagination.size + 1)

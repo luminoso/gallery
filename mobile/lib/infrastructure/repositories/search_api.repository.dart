@@ -41,7 +41,9 @@ class SearchApiRepository extends ApiRepository {
         city: filter.location.city == null ? const Optional.absent() : Optional.present(filter.location.city),
         make: filter.camera.make == null ? const Optional.absent() : Optional.present(filter.camera.make),
         model: filter.camera.model == null ? const Optional.absent() : Optional.present(filter.camera.model),
-        takenAfter: filter.date.takenAfter == null ? const Optional.absent() : Optional.present(filter.date.takenAfterParam),
+        takenAfter: filter.date.takenAfter == null
+            ? const Optional.absent()
+            : Optional.present(filter.date.takenAfterParam),
         takenBefore: filter.date.takenBefore == null
             ? const Optional.absent()
             : Optional.present(filter.date.takenBeforeParam),
@@ -76,7 +78,9 @@ class SearchApiRepository extends ApiRepository {
       city: filter.location.city == null ? const Optional.absent() : Optional.present(filter.location.city),
       make: filter.camera.make == null ? const Optional.absent() : Optional.present(filter.camera.make),
       model: filter.camera.model == null ? const Optional.absent() : Optional.present(filter.camera.model),
-      takenAfter: filter.date.takenAfter == null ? const Optional.absent() : Optional.present(filter.date.takenAfterParam),
+      takenAfter: filter.date.takenAfter == null
+          ? const Optional.absent()
+          : Optional.present(filter.date.takenAfterParam),
       takenBefore: filter.date.takenBefore == null
           ? const Optional.absent()
           : Optional.present(filter.date.takenBeforeParam),
