@@ -2290,8 +2290,10 @@ export class SharedSpaceRepository {
     params: [{ userIds: [DummyValue.UUID], visibility: AssetVisibility.Timeline }],
   })
   getFilteredMapMarkers(options: AssetSearchBuilderOptions) {
-    // The map answers the filter panel like the timeline does, so its filters come from the shared
-    // asset filter rather than upstream search's (fileCreatedAt) rules; only scope stays upstream.
+    // The map answers the filter panel like the timeline does, so the panel's taken, place, camera
+    // and rating filters come from the shared asset filter; scope and the remaining filters (text,
+    // type, favourites, tags, people, albums) stay with upstream search. The filter's asset_exif
+    // EXISTS and the lat/long join below both probe asset_exif by primary key, which is cheap.
     return searchAssetBuilderLegacy(this.db, without(options, ...assetFilterKeys))
       .$call((qb) => withAssetFilter(qb, options))
       .innerJoin('asset_exif', 'asset.id', 'asset_exif.assetId')

@@ -1,20 +1,24 @@
-import { Expression, SelectQueryBuilder, SqlBool, expressionBuilder } from 'kysely';
+import { Expression, Kysely, SelectQueryBuilder, SqlBool, expressionBuilder } from 'kysely';
+import type { AssetSearchBuilderOptions } from 'src/repositories/search.repository.js';
 import { DB } from 'src/schema/index.js';
+import { searchAssetBuilderLegacy } from 'src/utils/database.js';
 import { without } from 'src/utils/filter-suggestions.js';
 
 /**
  * The filter panel's shared vocabulary, defined once for every fork surface that answers it: the
- * timeline buckets, filter suggestions, smart-search facets, the filtered map and the space people
- * lists. Viewer scope (owner / space / visibility) is NOT part of it; each caller keeps its own.
+ * timeline buckets, filter suggestions, smart-search facets, the filtered map, the space people
+ * lists, and the taken range of search results (searchAssetBuilderWithLocalTaken below). Viewer
+ * scope (owner / space / visibility) is NOT part of it; each caller keeps its own.
  *
- * - taken: `asset.localDateTime`, the column the timeline groups its buckets by, so a month the panel
- *   sends is the same month the grid shows. `takenAfter` is inclusive, `takenBefore` exclusive,
- *   because the panel sends the start of the next day/month as the upper bound.
+ * - taken: `asset.localDateTime`, the wall-clock time the timeline groups its buckets by, so a month
+ *   a client sends is the same month the grid shows. `takenAfter` is inclusive, `takenBefore`
+ *   exclusive. Clients send wall-clock ranges as UTC: the start of the first day and the start of
+ *   the day after the last one (web filter-panel.ts, mobile search_api.repository.dart).
  * - place/camera: `null` means "has no value" (IS NULL), `undefined` and `''` mean "no filter".
  * - rating: a minimum (`>=`); `null` means unrated.
  *
- * Upstream search (`searchAssetBuilderLegacy`) keeps its own rules (`fileCreatedAt`, inclusive upper
- * bound, exact rating unless `ratingIsMinimum`); see specs/2026-07-23-search-v3-coexistence-design.md.
+ * `searchAssetBuilderLegacy` itself is upstream and untouched (fileCreatedAt, inclusive bound, exact
+ * rating unless `ratingIsMinimum`); see specs/2026-07-23-search-v3-coexistence-design.md.
  */
 export interface AssetFilter {
   takenAfter?: Date | string;
@@ -88,4 +92,15 @@ export function withAssetFilter<T extends SelectQueryBuilder<DB, any, any>>(
     query = query.where(condition);
   }
   return query as T;
+}
+
+/**
+ * Upstream search (`searchAssetBuilderLegacy`) with its taken range swapped for this module's, so
+ * search results agree with the timeline, suggestions and facets. Everything else stays upstream.
+ */
+export function searchAssetBuilderWithLocalTaken(kysely: Kysely<DB>, options: AssetSearchBuilderOptions) {
+  return withAssetFilter(searchAssetBuilderLegacy(kysely, without(options, 'takenAfter', 'takenBefore')), {
+    takenAfter: options.takenAfter,
+    takenBefore: options.takenBefore,
+  });
 }

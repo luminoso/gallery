@@ -42,13 +42,13 @@ from
   "asset"
   inner join "asset_exif" on "asset"."id" = "asset_exif"."assetId"
 where
-  "asset"."fileCreatedAt" >= $1
-  and "asset_exif"."lensModel" = $2
-  and "asset"."ownerId" = any ($3::uuid[])
-  and "asset"."isFavorite" = $4
+  "asset_exif"."lensModel" = $1
+  and "asset"."ownerId" = any ($2::uuid[])
+  and "asset"."isFavorite" = $3
   and "asset"."deletedAt" is null
+  and "asset"."localDateTime" >= $4
 order by
-  "asset"."fileCreatedAt" desc,
+  "asset"."localDateTime" desc,
   "asset"."id" desc
 limit
   $5
@@ -161,7 +161,7 @@ where
   )
   and "asset"."deletedAt" is null
 order by
-  "asset"."fileCreatedAt" desc,
+  "asset"."localDateTime" desc,
   "asset"."id" desc
 limit
   $12
@@ -175,11 +175,11 @@ from
   "asset"
   inner join "asset_exif" on "asset"."id" = "asset_exif"."assetId"
 where
-  "asset"."fileCreatedAt" >= $1
-  and "asset_exif"."lensModel" = $2
-  and "asset"."ownerId" = any ($3::uuid[])
-  and "asset"."isFavorite" = $4
+  "asset_exif"."lensModel" = $1
+  and "asset"."ownerId" = any ($2::uuid[])
+  and "asset"."isFavorite" = $3
   and "asset"."deletedAt" is null
+  and "asset"."localDateTime" >= $4
 
 -- SearchRepository.searchRandom
 select
@@ -215,11 +215,11 @@ from
   "asset"
   inner join "asset_exif" on "asset"."id" = "asset_exif"."assetId"
 where
-  "asset"."fileCreatedAt" >= $1
-  and "asset_exif"."lensModel" = $2
-  and "asset"."ownerId" = any ($3::uuid[])
-  and "asset"."isFavorite" = $4
+  "asset_exif"."lensModel" = $1
+  and "asset"."ownerId" = any ($2::uuid[])
+  and "asset"."isFavorite" = $3
   and "asset"."deletedAt" is null
+  and "asset"."localDateTime" >= $4
 order by
   random()
 limit
@@ -260,11 +260,11 @@ from
   "asset"
   inner join "asset_exif" on "asset"."id" = "asset_exif"."assetId"
 where
-  "asset"."fileCreatedAt" >= $1
-  and "asset_exif"."lensModel" = $2
-  and "asset"."ownerId" = any ($3::uuid[])
-  and "asset"."isFavorite" = $4
+  "asset_exif"."lensModel" = $1
+  and "asset"."ownerId" = any ($2::uuid[])
+  and "asset"."isFavorite" = $3
   and "asset"."deletedAt" is null
+  and "asset"."localDateTime" >= $4
   and "asset_exif"."fileSizeInByte" > $5
 order by
   "asset_exif"."fileSizeInByte" desc
@@ -353,10 +353,10 @@ from
           and "asset_face"."isVisible" is true
           and "shared_space_person_face"."personId" = $10::uuid
       )
-      and "asset"."fileCreatedAt" >= $11
-      and "asset_exif"."lensModel" = $12
-      and "asset"."isFavorite" = $13
+      and "asset_exif"."lensModel" = $11
+      and "asset"."isFavorite" = $12
       and "asset"."deletedAt" is null
+      and "asset"."localDateTime" >= $13
       and (smart_search.embedding <=> $14) <= $15
     order by
       smart_search.embedding <=> $16

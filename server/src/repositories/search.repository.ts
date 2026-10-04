@@ -20,7 +20,7 @@ import { AssetStatus, AssetType, AssetVisibility, VectorIndex } from 'src/enum.j
 import { probes } from 'src/repositories/database.repository.js';
 import { DB } from 'src/schema/index.js';
 import { AssetExifTable } from 'src/schema/tables/asset-exif.table.js';
-import { AssetFilter, withAssetFilter } from 'src/utils/asset-filter.js';
+import { AssetFilter, searchAssetBuilderWithLocalTaken, withAssetFilter } from 'src/utils/asset-filter.js';
 import {
   anyUuid,
   asUuid,
@@ -495,7 +495,7 @@ export class SearchRepository {
   )
   async searchMetadata(pagination: SearchPaginationOptions, options: AssetSearchOptions) {
     const orderDirection = (options.orderDirection?.toLowerCase() || 'desc') as OrderByDirection;
-    const items = await searchAssetBuilderLegacy(this.db, options)
+    const items = await searchAssetBuilderWithLocalTaken(this.db, options)
       .select(columns.searchAsset)
       // #763: project the per-user overlay onto the rows feeding mapAsset. Not folded into
       // searchAssetBuilderLegacy itself — searchStatistics also builds on it with an aggregate
@@ -503,7 +503,9 @@ export class SearchRepository {
       .$if(!!options.authUserId, (qb) =>
         qb.select((eb) => favoriteExistsFor(eb, options.authUserId!).as('isFavoriteForUser')),
       )
-      .orderBy('asset.fileCreatedAt', orderDirection)
+      // Fork: sorted by the same "taken" column the range filters on (src/utils/asset-filter.ts), so a
+      // date-filtered page walks asset_localDateTime_range_idx instead of scanning fileCreatedAt.
+      .orderBy('asset.localDateTime', orderDirection)
       .orderBy('asset.id', orderDirection)
       .limit(pagination.size + 1)
       .offset((pagination.page - 1) * pagination.size)
@@ -525,7 +527,7 @@ export class SearchRepository {
     ],
   })
   searchStatistics(options: AssetSearchOptions) {
-    return searchAssetBuilderLegacy(this.db, options)
+    return searchAssetBuilderWithLocalTaken(this.db, options)
       .select((qb) => qb.fn.countAll<number>().as('total'))
       .executeTakeFirstOrThrow();
   }
@@ -546,7 +548,7 @@ export class SearchRepository {
   })
   async searchRandom(size: number, options: AssetSearchOptions) {
     return (
-      searchAssetBuilderLegacy(this.db, options)
+      searchAssetBuilderWithLocalTaken(this.db, options)
         .select(columns.searchAsset)
         // #763: see searchMetadata above for why this lives per-caller rather than in searchAssetBuilderLegacy.
         .$if(!!options.authUserId, (qb) =>
@@ -575,7 +577,7 @@ export class SearchRepository {
   searchLargeAssets(size: number, options: LargeAssetSearchOptions) {
     const orderDirection = (options.orderDirection?.toLowerCase() || 'desc') as OrderByDirection;
     return (
-      searchAssetBuilderLegacy(this.db, options)
+      searchAssetBuilderWithLocalTaken(this.db, options)
         .select(columns.searchAsset)
         // #763: see searchMetadata above for why this lives per-caller rather than in searchAssetBuilderLegacy.
         .$if(!!options.authUserId, (qb) =>
@@ -599,7 +601,7 @@ export class SearchRepository {
     const personIds = options.personIds?.filter(Boolean) ?? [];
     const identityIds = options.identityIds?.filter(Boolean) ?? [];
 
-    let baseQuery = searchAssetBuilderLegacy(kysely, {
+    let baseQuery = searchAssetBuilderWithLocalTaken(kysely, {
       ...without(options, 'personIds', 'personMatchAny', 'identityIds', 'forceEmptyResult'),
       ratingIsMinimum: true,
     })

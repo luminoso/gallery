@@ -246,6 +246,8 @@ describe(AssetRepository.name, () => {
 
       await createTimelineAsset(ctx, user.id, new Date('2024-01-10T00:00:00.000Z'));
       await createTimelineAsset(ctx, user.id, new Date('2024-01-20T00:00:00.000Z'));
+      // Just past the bound: excluded like the asset exactly on it.
+      await createTimelineAsset(ctx, user.id, new Date('2024-01-20T00:00:01.000Z'));
 
       await expect(
         sut.getTimeBuckets(
