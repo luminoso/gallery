@@ -51,8 +51,11 @@ export interface StorageBackend {
   /** Read the whole object into memory */
   readAll(key: string): Promise<Buffer>;
 
-  /** Check if a key exists */
-  exists(key: string): Promise<boolean>;
+  /**
+   * Check if a key exists. With `readable`, a disk file must also be readable (upstream's sidecar
+   * check); an S3 HeadObject only succeeds when the object can be read, so S3 ignores it.
+   */
+  exists(key: string, options?: { readable?: boolean }): Promise<boolean>;
 
   /** Delete the content at the given key */
   delete(key: string): Promise<void>;

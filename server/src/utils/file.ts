@@ -85,6 +85,7 @@ const cacheControlHeaders: Record<CacheControl, string | null> = {
 
 // The signal sendFile aborts when its response closes, for the handler it runs: services pass it
 // to storage backends so a read opened for the response lives no longer than the response does.
+// Outside sendFile it is undefined, and whoever consumes a served stream must destroy it.
 const responseSignal = new AsyncLocalStorage<AbortSignal>();
 export const getResponseSignal = () => responseSignal.getStore();
 

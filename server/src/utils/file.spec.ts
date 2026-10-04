@@ -1,6 +1,6 @@
-import { HttpException } from '@nestjs/common';
+import { HttpException, NotFoundException } from '@nestjs/common';
 import express from 'express';
-import { once } from 'node:events';
+import { EventEmitter, once } from 'node:events';
 import { get } from 'node:http';
 import { Readable } from 'node:stream';
 import request from 'supertest';
@@ -510,6 +510,35 @@ describe('sendFile with ImmichMediaResponse', () => {
     await sendFile(res, next, () => Promise.reject(error), mockLogger);
 
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should stay silent about a backend read aborted because the client left', async () => {
+    const res = Object.assign(new EventEmitter(), { headersSent: false }) as any;
+    const next = vi.fn();
+
+    await sendFile(
+      res,
+      next,
+      () => {
+        res.emit('close'); // the client leaves while the handler is still reading
+        return Promise.reject(new DOMException('This operation was aborted', 'AbortError'));
+      },
+      mockLogger,
+    );
+
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLogger.error).not.toHaveBeenCalled();
+  });
+
+  it('should still report an AbortError while the response is open', async () => {
+    const res = Object.assign(new EventEmitter(), { headersSent: false }) as any;
+    const next = vi.fn();
+    const error = new DOMException('Request aborted', 'AbortError');
+
+    await sendFile(res, next, () => Promise.reject(error), mockLogger);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(expect.any(NotFoundException));
   });
 
   it('should silently return if headers are already sent', async () => {

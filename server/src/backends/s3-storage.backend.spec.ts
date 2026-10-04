@@ -2,7 +2,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { Readable } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3StorageBackend, S3_STREAM_IDLE_TIMEOUT_MS } from 'src/backends/s3-storage.backend.js';
 import { CacheControl } from 'src/enum.js';
@@ -522,6 +522,40 @@ describe('S3StorageBackend', () => {
       await expect(queued).rejects.toMatchObject({ name: 'AbortError' });
       expect(send).toHaveBeenCalledTimes(1);
       expect(activeSlots()).toBe(0);
+    });
+
+    it('is never queued for by a client that already left', async () => {
+      send.mockResolvedValueOnce({ Body: quietBody() });
+      const firstStream = await serve();
+      const response = new AbortController();
+      response.abort();
+
+      // the slot is held, so a queued read would hang here instead of rejecting
+      await expect(serve(response.signal)).rejects.toMatchObject({ name: 'AbortError' });
+      expect((proxyBackend as any).proxyReadLimiter.queue).toHaveLength(0);
+      firstStream.destroy();
+      await vi.waitFor(() => expect(activeSlots()).toBe(0));
+    });
+
+    it('never surfaces an idle destroy as an unhandled stream error while the stream is only piped', async () => {
+      // pipe() adds no 'error' listener to its source, and with no signal nothing else does: this
+      // holds only because the backend's own pipeline listens on the stream it returns
+      vi.useFakeTimers();
+      send.mockResolvedValueOnce({ Body: quietBody() });
+      const stream = await serve();
+      stream.pipe(new PassThrough());
+      const uncaught = vi.fn();
+      process.on('uncaughtException', uncaught);
+
+      try {
+        await vi.advanceTimersByTimeAsync(S3_STREAM_IDLE_TIMEOUT_MS);
+        vi.useRealTimers();
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(stream.errored?.message).toBe('S3 stream idle timeout');
+        expect(uncaught).not.toHaveBeenCalled();
+      } finally {
+        process.off('uncaughtException', uncaught);
+      }
     });
 
     it('is released when the client leaves after the stream exists but before anything reads it', async () => {

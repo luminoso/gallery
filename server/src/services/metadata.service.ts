@@ -474,7 +474,7 @@ export class MetadataService extends BaseService {
     let sidecarPath = null;
     for (const candidate of this.getSidecarCandidates(asset)) {
       const backend = await this.backendFor(candidate);
-      const isExists = await backend.exists(candidate);
+      const isExists = await backend.exists(candidate, { readable: true });
       if (!isExists) {
         continue;
       }

@@ -22,6 +22,11 @@ export class DiskStorageBackend implements StorageBackend {
     if (isAbsolute(key)) {
       return key;
     }
+    // an absolute-only backend (see BaseService.backendFor): a relative key would resolve against
+    // the cwd, and deletePrefix would then remove whatever it found there
+    if (!this.mediaLocation) {
+      throw new Error(`Disk backend without a media location cannot resolve relative key ${key}`);
+    }
     return join(this.mediaLocation, key);
   }
 
@@ -50,8 +55,11 @@ export class DiskStorageBackend implements StorageBackend {
     return this.storageRepository.readFile(this.resolvePath(key));
   }
 
-  exists(key: string): Promise<boolean> {
-    return this.storageRepository.checkFileExists(this.resolvePath(key), constants.R_OK);
+  exists(key: string, options?: { readable?: boolean }): Promise<boolean> {
+    return this.storageRepository.checkFileExists(
+      this.resolvePath(key),
+      options?.readable ? constants.R_OK : constants.F_OK,
+    );
   }
 
   delete(key: string): Promise<void> {

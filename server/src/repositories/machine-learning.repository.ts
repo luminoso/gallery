@@ -333,6 +333,8 @@ export class MachineLearningRepository {
     if ('imagePath' in payload) {
       // Dynamic import to avoid circular dependency:
       // MachineLearningRepository -> StorageService -> BaseService -> MachineLearningRepository
+      // Needs StorageService.onBootstrap to have set the backends, which every worker does on
+      // AppBootstrap before it runs jobs.
       const { StorageService } = await import('../services/storage.service.js');
       const fileBuffer = await StorageService.resolveBackendForKey(payload.imagePath).readAll(payload.imagePath);
       formData.append('image', new Blob([new Uint8Array(fileBuffer)]));

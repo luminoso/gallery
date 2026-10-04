@@ -251,7 +251,9 @@ export class S3StorageBackend implements StorageBackend {
       release();
     });
     // destroying either side destroys the other, which is what frees the S3 socket; the error, if
-    // any, surfaces on `stream` for the consumer
+    // any, surfaces on `stream` for the consumer. pipeline's listeners are also what keep an idle
+    // or abort destroy from becoming an unhandled 'error' while `stream` is only pipe()d to a
+    // response, since pipe() adds none to its source.
     pipelineCallback(body, stream, () => {});
     if (signal) {
       // destroys at once when the signal is already aborted
@@ -263,6 +265,8 @@ export class S3StorageBackend implements StorageBackend {
   async getServeStrategy(key: string, options: ServeOptions): Promise<ServeStrategy> {
     if (this.serveMode === 'proxy') {
       const { signal } = options;
+      // a client that already left takes no place in the queue
+      signal?.throwIfAborted();
       const release = await this.proxyReadLimiter.acquire();
       try {
         // the client may have left while this read waited for its slot
