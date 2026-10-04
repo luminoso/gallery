@@ -1790,7 +1790,7 @@ export class PersonRepository {
     return this.db
       .selectFrom('person')
       .select(['person.personGroupId', 'person.ownerId'])
-      .where('person.name', '!=', '')
+      .where(sql`BTRIM("person"."name")`, '<>', '')
       .where('person.isHidden', '=', false)
       .where('person.type', '=', 'person')
       .where((eb) =>
