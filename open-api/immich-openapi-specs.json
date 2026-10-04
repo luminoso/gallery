@@ -8204,7 +8204,7 @@
             "name": "takenAfter",
             "required": false,
             "in": "query",
-            "description": "Filter assets taken after this date",
+            "description": "Filter assets taken on or after this local date and time (inclusive)",
             "schema": {
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
@@ -8216,7 +8216,7 @@
             "name": "takenBefore",
             "required": false,
             "in": "query",
-            "description": "Filter assets taken before this date",
+            "description": "Filter assets taken before this local date and time (exclusive)",
             "schema": {
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
@@ -23283,7 +23283,7 @@
             "name": "takenAfter",
             "required": false,
             "in": "query",
-            "description": "Only include assets taken on or after this date (ISO 8601)",
+            "description": "Only include assets taken on or after this local date and time (ISO 8601, inclusive)",
             "schema": {
               "type": "string"
             }
@@ -23292,7 +23292,7 @@
             "name": "takenBefore",
             "required": false,
             "in": "query",
-            "description": "Only include assets taken on or before this date (ISO 8601)",
+            "description": "Only include assets taken before this local date and time (ISO 8601, exclusive)",
             "schema": {
               "type": "string"
             }
@@ -23713,7 +23713,7 @@
             "name": "takenAfter",
             "required": false,
             "in": "query",
-            "description": "Only include assets taken on or after this date (ISO 8601)",
+            "description": "Only include assets taken on or after this local date and time (ISO 8601, inclusive)",
             "schema": {
               "type": "string"
             }
@@ -23722,7 +23722,7 @@
             "name": "takenBefore",
             "required": false,
             "in": "query",
-            "description": "Only include assets taken on or before this date (ISO 8601)",
+            "description": "Only include assets taken before this local date and time (ISO 8601, exclusive)",
             "schema": {
               "type": "string"
             }
@@ -24148,7 +24148,7 @@
             "name": "takenAfter",
             "required": false,
             "in": "query",
-            "description": "Only include assets taken on or after this date (ISO 8601)",
+            "description": "Only include assets taken on or after this local date and time (ISO 8601, inclusive)",
             "schema": {
               "type": "string"
             }
@@ -24157,7 +24157,7 @@
             "name": "takenBefore",
             "required": false,
             "in": "query",
-            "description": "Only include assets taken on or before this date (ISO 8601)",
+            "description": "Only include assets taken before this local date and time (ISO 8601, exclusive)",
             "schema": {
               "type": "string"
             }
