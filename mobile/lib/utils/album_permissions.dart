@@ -17,7 +17,7 @@ import 'package:immich_mobile/domain/models/album/album.model.dart';
 /// a role we positively know to be [AlbumUserRole.viewer] is refused. Hiding an album we are
 /// merely unsure about would make a legitimate target vanish with no explanation, which is a
 /// worse failure than offering one the server then declines; the server is the real enforcer
-/// either way. Same posture as `driftSpaceEditableProvider` for space people.
+/// either way.
 ///
 /// Space-linked albums are not a concern here: they carry no `album_user` row for the caller,
 /// so they never appear in the personal album list to begin with — which is exactly why they

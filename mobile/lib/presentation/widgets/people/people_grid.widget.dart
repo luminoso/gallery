@@ -11,10 +11,10 @@ import 'package:immich_mobile/utils/people.utils.dart';
 /// How a grid decides whether a person's name is editable.
 ///
 /// This is NOT a plain `bool Function(Person)`. The global People page's answer is
-/// reactive — it watches [driftSpaceEditableProvider], which resolves optimistically to true
-/// and rebuilds to false once a viewer's role arrives. A predicate evaluated outside a
-/// Consumer would be computed once and leave viewers holding rename affordances that fail
-/// server-side. The policy is therefore resolved inside [_PersonName]'s own build.
+/// reactive — it watches [driftSpaceEditableProvider], which reads as false until the spaces
+/// list resolves and rebuilds to true once an editor's role arrives. A predicate evaluated
+/// outside a Consumer would be computed once and leave editors stuck read-only. The policy
+/// is therefore resolved inside [_PersonName]'s own build.
 sealed class PeopleEditPolicy {
   const PeopleEditPolicy();
 }
@@ -95,8 +95,8 @@ class PeopleGrid extends StatelessWidget {
 
 // Renders a person's name and gates the rename affordance exactly like the web People page:
 // a personal/owned person (null spaceId) is always editable by the viewer; a Space-scoped
-// person is editable only when the viewer is an editor of that space (resolved optimistically,
-// defaulting to editable until known). A read-only Space person shows a plain, non-tappable
+// person is editable only when the viewer is an editor of that space (read-only until the
+// spaces list resolves). A read-only Space person shows a plain, non-tappable
 // name and no "add a name" prompt for empty names.
 class _PersonName extends ConsumerWidget {
   const _PersonName({required this.person, required this.editPolicy});
@@ -110,7 +110,7 @@ class _PersonName extends ConsumerWidget {
       FixedEditability(:final canEdit) => canEdit,
       PerPersonSpaceRole() => switch (person.spaceId) {
         null => true,
-        final spaceId => ref.watch(driftSpaceEditableProvider(spaceId)).value ?? true,
+        final spaceId => ref.watch(driftSpaceEditableProvider(spaceId)).value ?? false,
       },
     };
 
