@@ -208,8 +208,9 @@ void main() {
         ),
       ).thenAnswer((_) async => emptySuggestions());
 
-      final after = DateTime.utc(2024, 1, 1);
-      final before = DateTime.utc(2024, 12, 31);
+      // What the month cell stores: device-local first day and last second of January.
+      final after = DateTime(2024, 1, 1);
+      final before = DateTime(2024, 1, 31, 23, 59, 59);
       final filter = SearchFilter.empty().copyWith(
         location: const SearchLocationFilter(city: 'Paris', country: 'France'),
         camera: const SearchCameraFilter(make: 'Canon', model: 'EOS R5'),
@@ -233,8 +234,9 @@ void main() {
           personIds: null,
           rating: 4,
           tagIds: ['tag-1', 'tag-2'],
-          takenAfter: after,
-          takenBefore: before,
+          // Sent as the wall-clock range web sends: UTC midnight start, exclusive UTC midnight end.
+          takenAfter: DateTime.utc(2024, 1, 1),
+          takenBefore: DateTime.utc(2024, 2, 1),
           withSharedSpaces: true,
         ),
       ).called(1);

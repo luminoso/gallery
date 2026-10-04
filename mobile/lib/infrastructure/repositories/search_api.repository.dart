@@ -41,10 +41,10 @@ class SearchApiRepository extends ApiRepository {
         city: filter.location.city == null ? const Optional.absent() : Optional.present(filter.location.city),
         make: filter.camera.make == null ? const Optional.absent() : Optional.present(filter.camera.make),
         model: filter.camera.model == null ? const Optional.absent() : Optional.present(filter.camera.model),
-        takenAfter: filter.date.takenAfter == null ? const Optional.absent() : Optional.present(filter.date.takenAfter),
+        takenAfter: filter.date.takenAfter == null ? const Optional.absent() : Optional.present(filter.date.takenAfterParam),
         takenBefore: filter.date.takenBefore == null
             ? const Optional.absent()
-            : Optional.present(filter.date.takenBefore),
+            : Optional.present(filter.date.takenBeforeParam),
         visibility: Optional.present(filter.display.isArchive ? AssetVisibility.archive : AssetVisibility.timeline),
         rating: filter.rating.rating.toOptional(),
         isFavorite: filter.display.isFavorite ? const Optional.present(true) : const Optional.absent(),
@@ -76,10 +76,10 @@ class SearchApiRepository extends ApiRepository {
       city: filter.location.city == null ? const Optional.absent() : Optional.present(filter.location.city),
       make: filter.camera.make == null ? const Optional.absent() : Optional.present(filter.camera.make),
       model: filter.camera.model == null ? const Optional.absent() : Optional.present(filter.camera.model),
-      takenAfter: filter.date.takenAfter == null ? const Optional.absent() : Optional.present(filter.date.takenAfter),
+      takenAfter: filter.date.takenAfter == null ? const Optional.absent() : Optional.present(filter.date.takenAfterParam),
       takenBefore: filter.date.takenBefore == null
           ? const Optional.absent()
-          : Optional.present(filter.date.takenBefore),
+          : Optional.present(filter.date.takenBeforeParam),
       visibility: Optional.present(filter.display.isArchive ? AssetVisibility.archive : AssetVisibility.timeline),
       rating: filter.rating.rating.toOptional(),
       isFavorite: filter.display.isFavorite ? const Optional.present(true) : const Optional.absent(),

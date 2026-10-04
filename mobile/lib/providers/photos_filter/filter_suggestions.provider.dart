@@ -28,8 +28,8 @@ final photosFilterSuggestionsProvider = FutureProvider.autoDispose.family<Filter
     personIds: filter.people.isEmpty ? null : filter.people.map((p) => p.id).toList(),
     rating: filter.rating.rating.unwrapOrNull,
     tagIds: filter.tagIds,
-    takenAfter: filter.date.takenAfter,
-    takenBefore: filter.date.takenBefore,
+    takenAfter: filter.date.takenAfterParam,
+    takenBefore: filter.date.takenBeforeParam,
     // A non-owner viewer owns none of the shared-space assets they see, so an owner-scoped
     // facet query comes up empty. Request shared-space content so the facets populate,
     // mirroring the web filter page (map-filter-config.ts `withSharedSpaces: true`). The
