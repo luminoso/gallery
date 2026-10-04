@@ -197,6 +197,8 @@ describe('FacePersonVerdictRepository', () => {
     let personPId: string;
     // U: unnamed person — excluded by read gate
     let unnamedPersonId: string;
+    // W: whitespace-only name — excluded by read gate (whitespace is not a name)
+    let blankPersonId: string;
     // H: hidden person — excluded by read gate
     let hiddenPersonId: string;
     // X: pet person — excluded by read gate
@@ -233,6 +235,14 @@ describe('FacePersonVerdictRepository', () => {
       });
       unnamedPersonId = personU.personGroupId;
 
+      const { person: personW } = await ctx.newPerson({
+        ownerId: user.id,
+        name: ' '.repeat(3),
+        isHidden: false,
+        type: 'person',
+      });
+      blankPersonId = personW.personGroupId;
+
       const { person: personH } = await ctx.newPerson({
         ownerId: user.id,
         name: 'Hidden Hannah',
@@ -259,6 +269,7 @@ describe('FacePersonVerdictRepository', () => {
       const { assetFace: f5 } = await ctx.newAssetFace({ assetId: asset.id, personGroupId: null });
       // Asset faces for gate-excluded persons
       const { assetFace: fU } = await ctx.newAssetFace({ assetId: asset.id, personGroupId: null });
+      const { assetFace: fW } = await ctx.newAssetFace({ assetId: asset.id, personGroupId: null });
       const { assetFace: fH } = await ctx.newAssetFace({ assetId: asset.id, personGroupId: null });
       const { assetFace: fX } = await ctx.newAssetFace({ assetId: asset.id, personGroupId: null });
 
@@ -297,6 +308,7 @@ describe('FacePersonVerdictRepository', () => {
 
       // Read-gate persons each get one in-band pending suggestion
       await sut.upsertPending([{ personGroupId: unnamedPersonId, assetFaceId: fU.id, distance: 0.65 }]);
+      await sut.upsertPending([{ personGroupId: blankPersonId, assetFaceId: fW.id, distance: 0.65 }]);
       await sut.upsertPending([{ personGroupId: hiddenPersonId, assetFaceId: fH.id, distance: 0.65 }]);
       await sut.upsertPending([{ personGroupId: petPersonId, assetFaceId: fX.id, distance: 0.65 }]);
     });
@@ -353,6 +365,12 @@ describe('FacePersonVerdictRepository', () => {
     it('returns empty for an unnamed person (read gate)', async () => {
       const { sut } = setup();
       const res = await sut.getPendingForPerson(unnamedPersonId, opts);
+      expect(res).toEqual({ total: 0, items: [] });
+    });
+
+    it('returns empty for a whitespace-named person (read gate)', async () => {
+      const { sut } = setup();
+      const res = await sut.getPendingForPerson(blankPersonId, opts);
       expect(res).toEqual({ total: 0, items: [] });
     });
 

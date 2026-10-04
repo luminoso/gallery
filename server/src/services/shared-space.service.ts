@@ -3124,10 +3124,6 @@ export class SharedSpaceService extends BaseService {
     });
   }
 
-  private async resolveMovedSpacePersonFaces(faceIds: Array<{ assetFaceId: string }>): Promise<void> {
-    await this.facePersonVerdictRepository.drainPendingForFaces(faceIds.map(({ assetFaceId }) => assetFaceId));
-  }
-
   async mergeSpacePeople(
     auth: AuthDto,
     spaceId: string,
@@ -3181,7 +3177,7 @@ export class SharedSpaceService extends BaseService {
       createCrossOwnerMergeAuthorizer(() => Promise.resolve(server), dto),
     );
 
-    await this.resolveMovedSpacePersonFaces(movedFaceIds);
+    await this.facePersonVerdictRepository.drainPendingForFaces(movedFaceIds.map(({ assetFaceId }) => assetFaceId));
     await this.sharedSpaceRepository.logActivity({
       spaceId,
       userId: auth.user.id,
@@ -3824,7 +3820,7 @@ export class SharedSpaceService extends BaseService {
       // Reassign faces and migrate aliases
       const movedFaceIds = await this.sharedSpaceRepository.getFaceIdsForPerson(source.id);
       await this.sharedSpaceRepository.reassignPersonFacesSafe(source.id, target.id);
-      await this.resolveMovedSpacePersonFaces(movedFaceIds);
+      await this.facePersonVerdictRepository.drainPendingForFaces(movedFaceIds.map(({ assetFaceId }) => assetFaceId));
       await this.sharedSpaceRepository.migrateAliases(source.id, target.id);
 
       const candidateIdentityIds = [target.identityId, source.identityId].filter(

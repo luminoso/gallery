@@ -22,9 +22,11 @@ export interface AssignFacesInput {
   faceIds: string[];
   // `manual` is a human placement: the durable lock no scan questions. `owner-person` is an ordinary one.
   strength: 'manual' | 'owner-person';
-  // Omitted: move the faces unconditionally (a user's explicit reassignment). Set: move only the faces still
-  // on `from` (and ML-sourced, visible), the cleanup engine's write-time guard against a concurrent move since
-  // it planned. `from === personGroupId` re-affirms faces where they already sit.
+  // Omitted: move the faces unconditionally (a user's explicit reassignment).
+  // A different person: move only the faces still on `from` that are ML-sourced, visible and not deleted
+  // (reattributeFaces), the cleanup engine's write-time guard against a concurrent move since it planned.
+  // `personGroupId` itself: move nothing, re-affirm the faces where they sit; the only filter is that they are
+  // still on the person.
   from?: string;
 }
 
@@ -57,9 +59,7 @@ export class FaceAssignmentService {
     const { personGroupId, from, strength } = input;
     let faceIds = input.faceIds;
     if (from === undefined) {
-      for (const faceId of faceIds) {
-        await this.deps.personRepository.reassignFace(faceId, personGroupId, trx);
-      }
+      await this.deps.personRepository.reassignFaces({ faceIds, newPersonGroupId: personGroupId }, trx);
     } else if (from !== personGroupId) {
       faceIds = await this.deps.faceRepairRepository.reattributeFaces(from, personGroupId, faceIds, trx);
       if (faceIds.length === 0) {
@@ -96,6 +96,7 @@ export class FaceAssignmentService {
       this.deps.faceIdentityRepository.getManualLinkedFaceIds(unique),
       this.deps.facePersonVerdictRepository.getNegativeVerdictTokens(unique),
     ]);
+    // isSettledForOwner keys tokens by suspected owner; here there is exactly one, the target.
     const ownerTokens = new Map([['target', targetTokens(target)]]);
     return new Set(
       unique.filter((assetFaceId) =>

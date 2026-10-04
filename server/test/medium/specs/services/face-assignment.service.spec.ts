@@ -96,7 +96,7 @@ describe(FaceAssignmentService.name, () => {
     });
 
     it('writes an ordinary (owner-person) link when asked to', async () => {
-      const { ctx, sut, target, source, face } = await fixture();
+      const { ctx, sut, target, source, face, identity } = await fixture();
 
       await sut.assignFaces({
         personGroupId: target.personGroupId,
@@ -107,7 +107,8 @@ describe(FaceAssignmentService.name, () => {
 
       const { personGroupId, link } = await placement(ctx, face.id);
       expect(personGroupId).toBe(target.personGroupId);
-      expect(link?.source).toBe('owner-person');
+      // B2: an unlocked move still re-points the identity at the target; only the strength differs.
+      expect(link).toEqual({ identityId: identity.id, source: 'owner-person' });
     });
 
     it('with `from`, leaves a face that is no longer on `from` untouched', async () => {

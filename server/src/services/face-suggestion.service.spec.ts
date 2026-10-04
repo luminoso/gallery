@@ -62,7 +62,7 @@ describe(FaceSuggestionService.name, () => {
       expect(mocks.facePersonVerdict.upsertPending).not.toHaveBeenCalled();
     });
 
-    it('skips an unnamed / hidden / pet / missing person (edge 5, 7, 16)', async () => {
+    it('skips an unnamed / whitespace-named / hidden / pet / missing person (edge 5, 7, 16)', async () => {
       mocks.systemMetadata.get.mockResolvedValue(enabled);
 
       mocks.person.getByGroupIdOnly.mockResolvedValueOnce(void 0);
@@ -72,6 +72,16 @@ describe(FaceSuggestionService.name, () => {
         id: 'p',
         ownerId: 'u',
         name: '',
+        isHidden: false,
+        type: 'person',
+      } as any);
+      await expect(sut.handlePersonSuggestionScan({ id: 'p' })).resolves.toBe(JobStatus.Skipped);
+
+      // Same rule as the space scan: whitespace is not a name.
+      mocks.person.getByGroupIdOnly.mockResolvedValueOnce({
+        id: 'p',
+        ownerId: 'u',
+        name: ' '.repeat(3),
         isHidden: false,
         type: 'person',
       } as any);
@@ -95,6 +105,7 @@ describe(FaceSuggestionService.name, () => {
       } as any);
       await expect(sut.handlePersonSuggestionScan({ id: 'p' })).resolves.toBe(JobStatus.Skipped);
 
+      expect(mocks.person.getAssignedFaceEmbeddings).not.toHaveBeenCalled();
       expect(mocks.facePersonVerdict.upsertPending).not.toHaveBeenCalled();
     });
 
@@ -699,7 +710,7 @@ describe(FaceSuggestionService.name, () => {
         BadRequestException,
       );
       expect(mocks.facePersonVerdict.claimPending).not.toHaveBeenCalled();
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
 
     // S11 (slice 11a): confirm applies the identical owner-BOTH gate reject/ignore apply — owning the person
@@ -722,7 +733,7 @@ describe(FaceSuggestionService.name, () => {
         sut.confirmFaceSuggestion(AuthFactory.create(), person.personGroupId, face.id),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(mocks.facePersonVerdict.claimPending).not.toHaveBeenCalled();
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
 
     it('claims the row and assigns the face in the same transaction, then refreshes the feature photo', async () => {
@@ -778,7 +789,7 @@ describe(FaceSuggestionService.name, () => {
 
       // S11.7: no-op (already resolved) -> false, the signal the controller maps to 204.
       await expect(sut.confirmFaceSuggestion(AuthFactory.create(), person.personGroupId, face.id)).resolves.toBe(false);
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
 
     it('a CASCADE-deleted person or face → 400 (owner-only precedence, edges 9, 10)', async () => {
@@ -906,7 +917,7 @@ describe(FaceSuggestionService.name, () => {
         actorId: authUser.user.id,
       });
       expect(mocks.facePersonVerdict.markIgnored).not.toHaveBeenCalled();
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
       expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
 
@@ -924,7 +935,7 @@ describe(FaceSuggestionService.name, () => {
         actorId: authUser.user.id,
       });
       expect(mocks.facePersonVerdict.markRejected).not.toHaveBeenCalled();
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
       expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
 
@@ -950,7 +961,7 @@ describe(FaceSuggestionService.name, () => {
         source: 'suggestion',
         actorId: authUser.user.id,
       });
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
       expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
 
@@ -968,7 +979,7 @@ describe(FaceSuggestionService.name, () => {
         actorId: authUser.user.id,
       });
       expect(mocks.facePersonVerdict.markIgnored).not.toHaveBeenCalled();
-      expect(mocks.person.reassignFace).not.toHaveBeenCalled();
+      expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
       expect(mocks.person.reassignFaces).not.toHaveBeenCalled();
     });
   });
