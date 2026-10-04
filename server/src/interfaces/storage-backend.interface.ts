@@ -27,6 +27,12 @@ export type ServeOptions = {
    * it because the client replays the header to S3 on the presigned URL.
    */
   range?: string;
+  /**
+   * Aborted when the response this read is for closes. A backend that holds resources for the
+   * read (the S3 proxy's read slot and socket) ties them to it, so a client that leaves at any
+   * point frees them without the HTTP layer having to know they exist.
+   */
+  signal?: AbortSignal;
 };
 
 export type ServeStrategy =
@@ -41,6 +47,9 @@ export interface StorageBackend {
 
   /** Get a readable stream for the given key */
   get(key: string): Promise<{ stream: Readable; contentType?: string; length?: number }>;
+
+  /** Read the whole object into memory */
+  readAll(key: string): Promise<Buffer>;
 
   /** Check if a key exists */
   exists(key: string): Promise<boolean>;

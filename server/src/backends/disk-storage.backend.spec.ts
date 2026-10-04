@@ -6,6 +6,9 @@ import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DiskStorageBackend } from 'src/backends/disk-storage.backend.js';
 import { CacheControl } from 'src/enum.js';
+import { LoggingRepository } from 'src/repositories/logging.repository.js';
+import { StorageRepository } from 'src/repositories/storage.repository.js';
+import { automock } from 'test/utils.js';
 
 describe('DiskStorageBackend', () => {
   let backend: DiskStorageBackend;
@@ -14,7 +17,11 @@ describe('DiskStorageBackend', () => {
   beforeEach(async () => {
     testDir = join(tmpdir(), `immich-disk-test-${Date.now()}`);
     await mkdir(testDir, { recursive: true });
-    backend = new DiskStorageBackend(testDir);
+    backend = new DiskStorageBackend(
+      testDir,
+      // eslint-disable-next-line no-sparse-arrays
+      new StorageRepository(automock(LoggingRepository, { args: [, { getEnv: () => ({}) }], strict: false })),
+    );
   });
 
   afterEach(async () => {
@@ -63,6 +70,13 @@ describe('DiskStorageBackend', () => {
 
     it('should return false for non-existing file', async () => {
       expect(await backend.exists('nope.txt')).toBe(false);
+    });
+  });
+
+  describe('readAll', () => {
+    it('should read the whole file into a buffer', async () => {
+      await writeFile(join(testDir, 'test.txt'), 'data');
+      await expect(backend.readAll('test.txt')).resolves.toEqual(Buffer.from('data'));
     });
   });
 

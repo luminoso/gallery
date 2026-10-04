@@ -2908,20 +2908,6 @@ describe(MetadataService.name, () => {
           path: 'upload/user1/ab/cd/IMG_123.xmp',
         });
       });
-
-      it('should use checkFileExists for disk (absolute) paths', async () => {
-        const asset = forSidecarJob({
-          originalPath: '/path/to/IMG_123.jpg',
-          files: [],
-        });
-        mocks.assetJob.getForSidecarCheckJob.mockResolvedValue(asset);
-        mocks.storage.checkFileExists.mockResolvedValueOnce(true);
-
-        await expect(sut.handleSidecarCheck({ id: asset.id })).resolves.toBe(JobStatus.Success);
-
-        expect(mocks.storage.checkFileExists).toHaveBeenCalled();
-        expect(mockBackend.exists).not.toHaveBeenCalled();
-      });
     });
 
     describe('handleSidecarWrite with S3 paths', () => {
