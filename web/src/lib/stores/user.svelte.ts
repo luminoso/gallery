@@ -39,7 +39,7 @@ const fetchSpaces = async () => {
   try {
     userInteraction.recentSpaces = await getAllSpaces();
   } catch (error) {
-    // Left unknown (space people stay read-only); the next loadSpaces call retries.
+    // Left unknown (space-person edits stay offered, see isSpaceEditor); the next loadSpaces call retries.
     handleError(error, get(t)('failed_to_load_spaces'));
   } finally {
     spacesRequest = undefined;
