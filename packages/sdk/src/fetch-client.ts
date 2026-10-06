@@ -3468,6 +3468,8 @@ export type ServerFeaturesDto = {
     facialRecognition: boolean;
     /** Whether face import is enabled */
     importFaces: boolean;
+    /** Whether takenAfter/takenBefore filters compare the local (wall-clock) taken time with an exclusive end. Absent on older servers, which compare the UTC instant with an inclusive end. */
+    localTakenRange?: boolean;
     /** Whether map feature is enabled */
     map: boolean;
     /** Whether OAuth is enabled */

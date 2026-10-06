@@ -38044,6 +38044,10 @@
             "description": "Whether face import is enabled",
             "type": "boolean"
           },
+          "localTakenRange": {
+            "description": "Whether takenAfter/takenBefore filters compare the local (wall-clock) taken time with an exclusive end. Absent on older servers, which compare the UTC instant with an inclusive end.",
+            "type": "boolean"
+          },
           "map": {
             "description": "Whether map feature is enabled",
             "type": "boolean"

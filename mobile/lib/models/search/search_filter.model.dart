@@ -60,18 +60,26 @@ abstract class SearchDateFilter with _$SearchDateFilter {
 
   const factory SearchDateFilter({DateTime? takenBefore, DateTime? takenAfter}) = _SearchDateFilter;
 
-  // takenAfter / takenBefore hold the user's chosen first and last day (device-local DateTimes). The
-  // server compares the range with asset.localDateTime, the photo's wall-clock time stored as UTC
-  // (server/src/utils/asset-filter.ts), so send those calendar days the way web does: UTC midnight of
-  // the first day (inclusive) and UTC midnight of the day after the last one (exclusive).
-  DateTime? get takenAfterParam {
+  // takenAfter / takenBefore hold the user's chosen first and last day (device-local DateTimes). A
+  // server that declares `localTakenRange` (GET /server/features) compares the range with
+  // asset.localDateTime, the photo's wall-clock time stored as UTC (server/src/utils/asset-filter.ts),
+  // so those calendar days go out the way web sends them: UTC midnight of the first day (inclusive) and
+  // UTC midnight of the day after the last one (exclusive). An older server compares the UTC instant
+  // with an inclusive end, so it keeps getting the device-local instants unchanged.
+  DateTime? takenAfterParam({required bool localTakenRange}) {
     final day = takenAfter;
-    return day == null ? null : DateTime.utc(day.year, day.month, day.day);
+    if (day == null || !localTakenRange) {
+      return day;
+    }
+    return DateTime.utc(day.year, day.month, day.day);
   }
 
-  DateTime? get takenBeforeParam {
+  DateTime? takenBeforeParam({required bool localTakenRange}) {
     final day = takenBefore;
-    return day == null ? null : DateTime.utc(day.year, day.month, day.day + 1);
+    if (day == null || !localTakenRange) {
+      return day;
+    }
+    return DateTime.utc(day.year, day.month, day.day + 1);
   }
 
   Map<String, dynamic> toMap() {

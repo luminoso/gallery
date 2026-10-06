@@ -127,6 +127,7 @@ void main() {
     );
 
     test('metadata search sends the chosen month as a UTC wall-clock range with an exclusive end', () async {
+      sut = SearchApiRepository(apiService, localTakenRange: () => true);
       when(() => searchApi.searchAssets(any())).thenAnswer((_) async => null);
       await sut.search(january, 1);
       final dto = verify(() => searchApi.searchAssets(captureAny())).captured.single as MetadataSearchDto;
@@ -135,11 +136,30 @@ void main() {
     });
 
     test('smart search sends the chosen month as a UTC wall-clock range with an exclusive end', () async {
+      sut = SearchApiRepository(apiService, localTakenRange: () => true);
       when(() => searchApi.searchSmart(any())).thenAnswer((_) async => null);
       await sut.search(january.copyWith(context: 'beach'), 1);
       final dto = verify(() => searchApi.searchSmart(captureAny())).captured.single as SmartSearchDto;
       expect(dto.takenAfter.value, DateTime.utc(2024, 1, 1));
       expect(dto.takenBefore.value, DateTime.utc(2024, 2, 1));
+    });
+
+    // An older server compares the UTC instant with an inclusive end, so a wall-clock range would
+    // shift its results by the device's offset: it keeps getting the device-local instants.
+    test('metadata search keeps device-local instants for a server without localTakenRange', () async {
+      when(() => searchApi.searchAssets(any())).thenAnswer((_) async => null);
+      await sut.search(january, 1);
+      final dto = verify(() => searchApi.searchAssets(captureAny())).captured.single as MetadataSearchDto;
+      expect(dto.takenAfter.value, DateTime(2024, 1, 1));
+      expect(dto.takenBefore.value, DateTime(2024, 1, 31, 23, 59, 59));
+    });
+
+    test('smart search keeps device-local instants for a server without localTakenRange', () async {
+      when(() => searchApi.searchSmart(any())).thenAnswer((_) async => null);
+      await sut.search(january.copyWith(context: 'beach'), 1);
+      final dto = verify(() => searchApi.searchSmart(captureAny())).captured.single as SmartSearchDto;
+      expect(dto.takenAfter.value, DateTime(2024, 1, 1));
+      expect(dto.takenBefore.value, DateTime(2024, 1, 31, 23, 59, 59));
     });
 
     test('smart search still requests shared spaces when filtering by favourite', () async {
