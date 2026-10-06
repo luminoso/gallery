@@ -245,15 +245,18 @@ export class S3StorageBackend implements StorageBackend {
     };
     let idleTimer = setTimeout(checkIdle, S3_STREAM_IDLE_TIMEOUT_MS);
 
+    // pipeline's listeners leave once the body has ended into `stream`, and pipe() adds none to its
+    // source, so a later idle or abort destroy would otherwise be an unhandled 'error' that takes the
+    // process down (a stalled client on a stream served without a response signal, e.g. thumbnails).
+    // The error stays readable on `stream.errored`; the slot is released on 'close' below.
+    stream.on('error', () => {});
     // 'close' follows end, error and destroy alike
     stream.once('close', () => {
       clearTimeout(idleTimer);
       release();
     });
     // destroying either side destroys the other, which is what frees the S3 socket; the error, if
-    // any, surfaces on `stream` for the consumer. pipeline's listeners are also what keep an idle
-    // or abort destroy from becoming an unhandled 'error' while `stream` is only pipe()d to a
-    // response, since pipe() adds none to its source.
+    // any, surfaces on `stream` for the consumer.
     pipelineCallback(body, stream, () => {});
     if (signal) {
       // destroys at once when the signal is already aborted

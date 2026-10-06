@@ -2,7 +2,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { PassThrough, Readable } from 'node:stream';
+import { PassThrough, Readable, Writable } from 'node:stream';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3StorageBackend, S3_STREAM_IDLE_TIMEOUT_MS } from 'src/backends/s3-storage.backend.js';
 import { CacheControl } from 'src/enum.js';
@@ -553,6 +553,29 @@ describe('S3StorageBackend', () => {
         await new Promise((resolve) => setImmediate(resolve));
         expect(stream.errored?.message).toBe('S3 stream idle timeout');
         expect(uncaught).not.toHaveBeenCalled();
+      } finally {
+        process.off('uncaughtException', uncaught);
+      }
+    });
+
+    it('never surfaces an idle destroy as an unhandled error once the S3 body has ended into a stalled consumer', async () => {
+      // the thumbnail endpoint resolves its stream before sendFile, so there is no signal; once the
+      // body has ended into the stream the backend's pipeline completes and drops its listeners,
+      // leaving the idle destroy as the stream's only exit while the client holds the socket open
+      vi.useFakeTimers();
+      send.mockResolvedValueOnce({ Body: Readable.from([Buffer.from('a'), Buffer.from('b')]) });
+      const stream = await serve();
+      stream.pipe(new Writable({ highWaterMark: 1, write: () => {} }));
+      const uncaught = vi.fn();
+      process.on('uncaughtException', uncaught);
+
+      try {
+        await vi.advanceTimersByTimeAsync(S3_STREAM_IDLE_TIMEOUT_MS);
+        vi.useRealTimers();
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(stream.errored?.message).toBe('S3 stream idle timeout');
+        expect(uncaught).not.toHaveBeenCalled();
+        expect(activeSlots()).toBe(0);
       } finally {
         process.off('uncaughtException', uncaught);
       }
