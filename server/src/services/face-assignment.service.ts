@@ -26,8 +26,12 @@ export interface AssignFacesInput {
   // A different person: move only the faces still on `from` that are ML-sourced, visible and not deleted
   // (reattributeFaces), the cleanup engine's write-time guard against a concurrent move since it planned.
   // `personGroupId` itself: move nothing, re-affirm the faces where they sit; the only filter is that they are
-  // still on the person.
+  // still on the person (unless `movableOnly`).
   from?: string;
+  // With `from` equal to `personGroupId`, still apply the move's filter (ML-sourced, visible, not deleted). The
+  // cleanup engine routes current → suspected owner and the two can coincide; a re-affirm there must not touch a
+  // hand-drawn face the move would have skipped (an unlocked route would otherwise downgrade its manual link).
+  movableOnly?: boolean;
 }
 
 // Plain class (not @Injectable, not a repository), built once in BaseService's constructor and shared as
@@ -60,7 +64,9 @@ export class FaceAssignmentService {
     let faceIds = input.faceIds;
     if (from === undefined) {
       await this.deps.personRepository.reassignFaces({ faceIds, newPersonGroupId: personGroupId }, trx);
-    } else if (from !== personGroupId) {
+    } else if (from !== personGroupId || input.movableOnly) {
+      // In place, reattributeFaces sets the person the faces already carry: a no-op write that returns only the
+      // faces the move filter admits.
       faceIds = await this.deps.faceRepairRepository.reattributeFaces(from, personGroupId, faceIds, trx);
       if (faceIds.length === 0) {
         return [];

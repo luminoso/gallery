@@ -63,6 +63,7 @@ describe(FaceRepairService.name, () => {
         faceIds: ['f1', 'f2'],
         strength: 'manual',
         from: 'p1',
+        movableOnly: true,
       });
       // Never re-queues facial recognition — that is what re-clustered faces back to the wrong person.
       // (queueAll is only used for thumbnail regen, and only when a representative face was repointed.)
@@ -151,6 +152,20 @@ describe(FaceRepairService.name, () => {
       expect(assignFaces).toHaveBeenCalledWith(expect.objectContaining({ faceIds: ['f1'], strength: 'owner-person' }));
     });
 
+    // A route whose suspected owner is the current person re-affirms in place, but only over the faces a move
+    // would take: a hand-drawn face on an unlocked route must not have its manual link downgraded.
+    it('keeps the move filter on a route that stays on the same person', async () => {
+      arrangeSameOwnerMove(mocks);
+
+      await sut.executeRepair(
+        plan([{ assetFaceId: 'f1', currentPersonId: 'p1', suspectedOwnerId: 'p1', lock: false }]),
+      );
+
+      expect(assignFaces).toHaveBeenCalledWith(
+        expect.objectContaining({ personGroupId: 'p1', from: 'p1', movableOnly: true, strength: 'owner-person' }),
+      );
+    });
+
     // The scan's own auto-repair path builds FlaggedFace without a lock field and has always been durable.
     it('defaults an omitted lock flag to durable', async () => {
       arrangeSameOwnerMove(mocks);
@@ -172,12 +187,19 @@ describe(FaceRepairService.name, () => {
         ]),
       );
 
-      expect(assignFaces).toHaveBeenCalledWith({ personGroupId: 'q', faceIds: ['f1'], strength: 'manual', from: 'p1' });
+      expect(assignFaces).toHaveBeenCalledWith({
+        personGroupId: 'q',
+        faceIds: ['f1'],
+        strength: 'manual',
+        from: 'p1',
+        movableOnly: true,
+      });
       expect(assignFaces).toHaveBeenCalledWith({
         personGroupId: 'q',
         faceIds: ['f2'],
         strength: 'owner-person',
         from: 'p1',
+        movableOnly: true,
       });
     });
   });

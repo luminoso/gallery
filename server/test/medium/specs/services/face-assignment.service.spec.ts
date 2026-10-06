@@ -1,4 +1,5 @@
 import { Kysely } from 'kysely';
+import { SourceType } from 'src/enum.js';
 import { DatabaseRepository } from 'src/repositories/database.repository.js';
 import { FaceIdentityRepository } from 'src/repositories/face-identity.repository.js';
 import { FacePersonVerdictRepository } from 'src/repositories/face-person-verdict.repository.js';
@@ -147,6 +148,29 @@ describe(FaceAssignmentService.name, () => {
       const [placed, raced] = await Promise.all([placement(ctx, onTarget.id), placement(ctx, face.id)]);
       expect(placed.link).toEqual({ identityId: identity.id, source: 'manual' });
       expect(raced.link).toBeUndefined();
+    });
+
+    it('in place with `movableOnly` leaves a hand-drawn face untouched', async () => {
+      const { ctx, sut, target, identity } = await fixture();
+      const { asset } = await ctx.newAsset({ ownerId: target.ownerId });
+      const [{ assetFace: detected }, { assetFace: drawn }] = await Promise.all([
+        ctx.newAssetFace({ assetId: asset.id, personGroupId: target.personGroupId }),
+        ctx.newAssetFace({ assetId: asset.id, personGroupId: target.personGroupId, sourceType: SourceType.Manual }),
+      ]);
+
+      await expect(
+        sut.assignFaces({
+          personGroupId: target.personGroupId,
+          faceIds: [detected.id, drawn.id],
+          strength: 'owner-person',
+          from: target.personGroupId,
+          movableOnly: true,
+        }),
+      ).resolves.toEqual([detected.id]);
+
+      const [relinked, untouched] = await Promise.all([placement(ctx, detected.id), placement(ctx, drawn.id)]);
+      expect(relinked.link).toEqual({ identityId: identity.id, source: 'owner-person' });
+      expect(untouched.link).toBeUndefined();
     });
 
     it('is atomic: a failure on the last write leaves nothing written', async () => {

@@ -305,6 +305,7 @@ export class FaceRepairService extends BaseService {
         faceIds,
         strength: lock ? 'manual' : 'owner-person',
         from,
+        movableOnly: true,
       });
       skipped += faceIds.length - movedIds.length;
       if (movedIds.length === 0) {
