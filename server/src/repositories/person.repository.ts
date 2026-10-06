@@ -258,8 +258,11 @@ export class PersonRepository {
   constructor(@InjectKysely() private db: Kysely<DB>) {}
 
   @GenerateSql({ params: [{ oldPersonGroupId: DummyValue.UUID, newPersonGroupId: DummyValue.UUID }] })
-  async reassignFaces({ oldPersonGroupId, faceIds, ownerId, newPersonGroupId }: UpdateFacesData): Promise<number> {
-    const result = await this.db
+  async reassignFaces(
+    { oldPersonGroupId, faceIds, ownerId, newPersonGroupId }: UpdateFacesData,
+    db: Kysely<DB> | Transaction<DB> = this.db,
+  ): Promise<number> {
+    const result = await db
       .updateTable('asset_face')
       .from('asset')
       .whereRef('asset_face.assetId', '=', 'asset.id')
@@ -1790,7 +1793,7 @@ export class PersonRepository {
     return this.db
       .selectFrom('person')
       .select(['person.personGroupId', 'person.ownerId'])
-      .where('person.name', '!=', '')
+      .where(sql`BTRIM("person"."name")`, '<>', '')
       .where('person.isHidden', '=', false)
       .where('person.type', '=', 'person')
       .where((eb) =>
