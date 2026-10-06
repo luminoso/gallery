@@ -723,7 +723,7 @@ describe('Global people page', () => {
     expect(sdkMock.getMembers).not.toHaveBeenCalled();
   });
 
-  it('keeps space-primary names read-only until the spaces list resolves', async () => {
+  it('keeps space-primary names editable until the spaces list says the viewer cannot edit', async () => {
     let resolveSpaces!: (spaces: SharedSpaceResponseDto[]) => void;
     sdkMock.getAllSpaces.mockReturnValue(new Promise((resolve) => (resolveSpaces = resolve)));
     renderPage([
@@ -736,11 +736,12 @@ describe('Global people page', () => {
     ]);
 
     await waitFor(() => expect(sdkMock.getAllSpaces).toHaveBeenCalledOnce());
-    expect(screen.queryByDisplayValue('Shared Alice')).toBeNull();
-
-    resolveSpaces([makeSpace('space-1', SharedSpaceRole.Editor)]);
-
     expect(await screen.findByDisplayValue('Shared Alice')).toBeInTheDocument();
+
+    resolveSpaces([makeSpace('space-1', SharedSpaceRole.Viewer)]);
+
+    await waitFor(() => expect(screen.queryByDisplayValue('Shared Alice')).toBeNull());
+    expect(screen.getByText('Shared Alice')).toBeInTheDocument();
   });
 
   it('keeps personal actions off shared-space-only rows', async () => {

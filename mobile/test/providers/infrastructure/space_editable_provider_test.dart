@@ -60,26 +60,26 @@ void main() {
     expect(await containerFor(_user('user-3')).read(driftSpaceEditableProvider('space-3').future), isFalse);
   });
 
-  test('a space missing from the list, or no resolved user, is not editable', () async {
-    expect(await containerFor(_user('user-2')).read(driftSpaceEditableProvider('space-unknown').future), isFalse);
-    expect(await containerFor(null).read(driftSpaceEditableProvider('space-3').future), isFalse);
+  test('a space missing from the list, or no resolved user, fails open', () async {
+    expect(await containerFor(_user('user-3')).read(driftSpaceEditableProvider('space-unknown').future), isTrue);
+    expect(await containerFor(null).read(driftSpaceEditableProvider('space-3').future), isTrue);
   });
 
-  test('a failed spaces list is not editable instead of erroring', () async {
+  test('a failed spaces list fails open instead of erroring', () async {
     when(() => repo.getAll()).thenThrow(Exception('offline'));
 
-    expect(await containerFor(_user('user-2')).read(driftSpaceEditableProvider('space-3').future), isFalse);
+    expect(await containerFor(_user('user-3')).read(driftSpaceEditableProvider('space-3').future), isTrue);
   });
 
-  test('has no value while the spaces list loads, then resolves', () async {
+  test('has no value while the spaces list loads, then resolves a viewer to read-only', () async {
     final spaces = Completer<List<SharedSpaceResponseDto>>();
     when(() => repo.getAll()).thenAnswer((_) => spaces.future);
-    final container = containerFor(_user('user-2'));
+    final container = containerFor(_user('user-3'));
 
-    // Callers read `.valueOrNull ?? false`, so the loading state offers no edit affordances.
+    // Callers read `.valueOrNull ?? true`, so the loading state keeps the edit affordances.
     expect(container.read(driftSpaceEditableProvider('space-3')).valueOrNull, isNull);
 
     spaces.complete([SharedSpaceStub.spaceWithMembers]);
-    expect(await container.read(driftSpaceEditableProvider('space-3').future), isTrue);
+    expect(await container.read(driftSpaceEditableProvider('space-3').future), isFalse);
   });
 }

@@ -543,7 +543,7 @@ describe('Person detail page', () => {
     expect(screen.queryByText('merge_people')).not.toBeInTheDocument();
   });
 
-  it('offers no space-person write actions until the spaces list resolves, then shows them', async () => {
+  it('offers space-person write actions until the spaces list resolves, then hides them from a viewer', async () => {
     let resolveSpaces!: (spaces: SharedSpaceResponseDto[]) => void;
     sdkMock.getAllSpaces.mockReturnValue(new Promise((resolve) => (resolveSpaces = resolve)));
     renderPage({
@@ -554,16 +554,16 @@ describe('Person detail page', () => {
     });
 
     await waitFor(() => expect(sdkMock.getAllSpaces).toHaveBeenCalledOnce());
-    expect(screen.queryByText('set_date_of_birth')).not.toBeInTheDocument();
+    expect(await screen.findByText('set_date_of_birth')).toBeInTheDocument();
 
     resolveSpaces([
       sharedSpaceFactory.build({
         id: 'loading-space-detail',
-        members: [makeMember('current-user-id', SharedSpaceRole.Editor)],
+        members: [makeMember('current-user-id', SharedSpaceRole.Viewer)],
       }),
     ]);
 
-    expect(await screen.findByText('set_date_of_birth')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('set_date_of_birth')).not.toBeInTheDocument());
     expect(sdkMock.getMembers).not.toHaveBeenCalled();
   });
 

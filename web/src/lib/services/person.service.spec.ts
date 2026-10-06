@@ -218,9 +218,9 @@ describe('isSpaceEditor', () => {
     expect(isSpaceEditor(spaces, 'viewer-space', 'user-1')).toBe(false);
   });
 
-  it('fails closed while the spaces list is unknown or lacks the space', () => {
-    expect(isSpaceEditor(undefined, 'editor-space', 'user-1')).toBe(false);
-    expect(isSpaceEditor(spaces, 'unknown-space', 'user-1')).toBe(false);
+  it('fails open while the spaces list is unknown or lacks the space', () => {
+    expect(isSpaceEditor(undefined, 'viewer-space', 'user-1')).toBe(true);
+    expect(isSpaceEditor(spaces, 'unknown-space', 'user-1')).toBe(true);
   });
 
   it('reads the role from the spaces list without fetching members', () => {

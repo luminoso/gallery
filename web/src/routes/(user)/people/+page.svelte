@@ -334,8 +334,8 @@
   const isSpacePrimary = (person: PersonResponseDto) =>
     person.primaryProfile?.type === 'space-person' && !!person.primaryProfile.spaceId;
 
-  // Space-person renames need the owner/editor role, read from the spaces list; rows stay read-only
-  // until it loads (the server enforces the role regardless).
+  // Space-person renames need the owner/editor role, read from the spaces list; rows stay editable
+  // until it says otherwise (the server enforces the role regardless).
   $effect(() => {
     if (people.some((person) => isSpacePrimary(person))) {
       loadSpaces();

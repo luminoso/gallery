@@ -79,10 +79,9 @@ class _PersonPageState extends ConsumerState<PersonPage> {
   Widget build(BuildContext context) {
     // Mirror the web People page: a personal/owned person (null spaceId) is always editable by
     // the viewer; a Space-scoped person is editable only when the viewer is an editor of that
-    // space (read-only until the spaces list resolves). A read-only Space person gets no edit
-    // affordances.
+    // space (optimistic until resolved). A read-only Space person gets no edit affordances.
     final spaceId = _person.spaceId;
-    final editable = spaceId == null ? true : ref.watch(driftSpaceEditableProvider(spaceId)).valueOrNull ?? false;
+    final editable = spaceId == null ? true : ref.watch(driftSpaceEditableProvider(spaceId)).valueOrNull ?? true;
 
     return TimelineRouteScope(
       // A personal person reads the owner-scoped local timeline; a Space-shared person reads

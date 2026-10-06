@@ -26,12 +26,16 @@ import { handleError } from '$lib/utils/handle-error';
 import { getFormatter } from '$lib/utils/i18n';
 import { getPersonFaceThumbnailUrl, getSpacePersonFaceThumbnailUrl } from '$lib/utils/people-utils';
 
-// Resolved per space and cached for the session; the server enforces the role on every
-// write. The role is the viewer's own row in the spaces list (`getAllSpaces` embeds `members`,
-// see loadSpaces); while that list is unknown this fails closed.
+// The role is the viewer's own row in the spaces list (`getAllSpaces` embeds `members`, see
+// loadSpaces). The server enforces the role on every write, so this fails open: while the list is
+// unknown (loading or failed), or when it lacks the space (joined since it was cached), the actions
+// stay offered rather than hidden from an editor.
 export const isSpaceEditor = (spaces: SharedSpaceResponseDto[] | undefined, spaceId: string, userId: string) => {
   const space = spaces?.find(({ id }) => id === spaceId);
-  const role = space?.members?.find((member) => member.userId === userId)?.role;
+  if (!space) {
+    return true;
+  }
+  const role = space.members?.find((member) => member.userId === userId)?.role;
   return role === SharedSpaceRole.Owner || role === SharedSpaceRole.Editor;
 };
 

@@ -419,8 +419,8 @@
     await updateAssetCount();
   };
 
-  // Space-person writes need the owner/editor role, read from the spaces list; closed until it loads
-  // (the server enforces the role on every write regardless).
+  // Space-person writes need the owner/editor role, read from the spaces list; offered until it says
+  // otherwise (the server enforces the role on every write regardless).
   const personSpaceId = $derived(
     person.primaryProfile?.type === 'space-person' ? person.primaryProfile.spaceId : undefined,
   );

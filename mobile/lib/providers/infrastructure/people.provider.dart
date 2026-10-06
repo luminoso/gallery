@@ -20,14 +20,16 @@ final peopleServiceProvider = Provider<PeopleService>(
 /// Whether the viewer may edit Space-scoped people in [spaceId] (owner or editor role),
 /// mirroring the web People page (isSpaceEditor). Read from the viewer's own row in the
 /// already-loaded spaces list ([sharedSpacesProvider] — `getAll` embeds `members`), so it
-/// re-resolves whenever that list is refreshed or the login changes. Never errors: a failed
-/// list reads as not editable, and callers treat loading the same way (fail closed); the
-/// server enforces the role on every write regardless. The creator short-circuit in
-/// [spaceIsWritable] is redundant here (the creator is always an Owner member) but
-/// equivalent. Personal/owned people (null spaceId) never consult this — they are always
-/// editable by their owner.
+/// re-resolves whenever that list is refreshed or the login changes. Defaults to editable and
+/// fails open — while loading (callers read `.valueOrNull ?? true`), on a failed list, for a
+/// space missing from it, or with no resolved user — since the server enforces the role on every
+/// write. Personal/owned people (null spaceId) never consult this — they are always editable by
+/// their owner.
 final driftSpaceEditableProvider = FutureProvider.family<bool, String>((ref, spaceId) async {
   final userId = ref.watch(currentUserProvider.select((user) => user?.id));
+  if (userId == null) {
+    return true;
+  }
   try {
     final spaces = await ref.watch(sharedSpacesProvider.future);
     for (final space in spaces) {
@@ -36,9 +38,9 @@ final driftSpaceEditableProvider = FutureProvider.family<bool, String>((ref, spa
       }
     }
   } catch (_) {
-    // Offline or a failed list: read-only, same as while loading.
+    // Offline or a failed list: keep offering edits, the server enforces the role.
   }
-  return false;
+  return true;
 });
 
 final peopleAssetProvider = FutureProvider.family<List<Person>, ({String id, String ownerId})>((ref, key) async {
