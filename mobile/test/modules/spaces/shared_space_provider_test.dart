@@ -40,7 +40,8 @@ UserService _makeNoopUserService() {
 }
 
 ProviderContainer _container({required List<Override> overrides}) {
-  final container = ProviderContainer(overrides: overrides);
+  // A Gallery server unless a test says otherwise; a later override of the same provider wins.
+  final container = ProviderContainer(overrides: [serverSupportsSpacesProvider.overrideWithValue(true), ...overrides]);
   addTearDown(container.dispose);
   return container;
 }
@@ -98,6 +99,19 @@ void main() {
 
       expect(() => container.read(sharedSpacesProvider.future), throwsA(isA<Exception>()));
     });
+  });
+
+  test('sharedSpacesProvider never calls the fork-only endpoint on a stock Immich server', () async {
+    final container = _container(
+      overrides: [
+        sharedSpaceApiRepositoryProvider.overrideWithValue(mockRepo),
+        currentUserProvider.overrideWith((ref) => MockCurrentUserProvider()),
+        serverSupportsSpacesProvider.overrideWithValue(false),
+      ],
+    );
+
+    expect(await container.read(sharedSpacesProvider.future), isEmpty);
+    verifyZeroInteractions(mockRepo);
   });
 
   group('sharedSpaceProvider', () {
