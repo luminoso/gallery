@@ -8,7 +8,8 @@ import 'package:openapi/api.dart';
 /// Whether the connected server serves Spaces, by the same rule as the sync request list
 /// (`SyncApiRepository._forkSyncTypes`): its declared sync types, else a fork version above 5.0.0.
 /// True while the server version is still unknown (0.0.0), so loading and offline starts keep the
-/// Spaces entry points; false once a stock Immich server is identified.
+/// Spaces entry points; false once a stock Immich server is identified. Other fork-only endpoints
+/// (filter suggestions) gate on it too, since only a Gallery server serves Spaces.
 bool serverSupportsSpaces(SemVer version, Set<String>? declaredSyncTypes) {
   if (declaredSyncTypes != null) {
     return declaredSyncTypes.contains(SyncRequestType.sharedSpacesV1.toJson());
@@ -25,6 +26,10 @@ final serverSupportsSpacesProvider = Provider<bool>(
 final sharedSpacesProvider = FutureProvider<List<SharedSpaceResponseDto>>((ref) async {
   // Watch current user so the provider refreshes on login/logout
   ref.watch(currentUserProvider);
+  // Every Spaces surface reads this list, so one gate keeps them all off a stock server's 404.
+  if (!ref.watch(serverSupportsSpacesProvider)) {
+    return const [];
+  }
   final repository = ref.watch(sharedSpaceApiRepositoryProvider);
   return repository.getAll();
 });
