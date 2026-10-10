@@ -611,11 +611,10 @@ DECLARE
 BEGIN
   -- Pattern list deliberately excludes '%AddPersonNameTrigramIndex%'
   -- because upstream Immich has a migration with that same basename
-  -- (1775165531374-AddPersonNameTrigramIndex) — Gallery's own version
-  -- at 1773846750001 is a stub since upstream adopted the same migration
-  -- under a different timestamp. The DELETE IN list above handles the
-  -- Gallery stub by exact name; this sanity check must not match the
-  -- legit upstream row.
+  -- (1775165531374-AddPersonNameTrigramIndex). Gallery's own 1773846750001
+  -- version was dropped once upstream shipped that migration, but older
+  -- databases may still record it. The DELETE IN list above removes that
+  -- row by exact name; this sanity check must not match the upstream row.
   SELECT count(*) INTO fork_rows_left
     FROM "kysely_migrations"
    WHERE "name" LIKE '%SharedSpace%'
@@ -672,7 +671,8 @@ BEGIN
        'face_person_verdict', 'face_repair_scan', 'face_repair_decline',
        'face_repair_scan_flagged_face', 'face_repair_lock',
        'pet_search',
-       'asset_favorite_audit', 'asset_favorite'
+       'asset_favorite_audit', 'asset_favorite',
+       'gallery_migrations', 'gallery_migrations_lock'
      );
   IF fork_tables_left > 0 THEN
     RAISE EXCEPTION 'revert-to-immich: % Gallery table(s) still present after cleanup — aborting.', fork_tables_left;

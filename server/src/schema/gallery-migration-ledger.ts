@@ -2,6 +2,8 @@ import { Kysely, sql } from 'kysely';
 import { FileMigrationProvider, MigrationResult, MigrationResultSet, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { serverVersion } from 'src/constants.js';
+import { LoggingRepository } from 'src/repositories/logging.repository.js';
 
 // Fork migrations are recorded in their own ledger so `kysely_migrations` only ever holds upstream
 // names, which is what a stock Immich server expects to find there.
@@ -41,12 +43,13 @@ const createGalleryMigrator = (db: Kysely<any>) =>
  * Brings a database written by any earlier build to the split layout: fork rows in
  * `gallery_migrations`, upstream rows in `kysely_migrations`, no row without a file. Idempotent.
  */
-const bootstrapGalleryLedger = async (db: Kysely<any>, galleryNames: string[]) => {
+const bootstrapGalleryLedger = async (db: Kysely<any>, galleryNames: string[], upstreamNames: string[]) => {
+  const counts = { renamed: 0, deleted: 0, moved: 0 };
   const { rows } = await sql<{ exists: boolean }>`
     SELECT to_regclass('kysely_migrations') IS NOT NULL AS "exists"
   `.execute(db);
   if (!rows[0].exists) {
-    return;
+    return counts;
   }
 
   await db.schema
@@ -76,8 +79,10 @@ const bootstrapGalleryLedger = async (db: Kysely<any>, galleryNames: string[]) =
         .where('name', '=', from)
         .execute();
       recorded.add(to);
+      counts.renamed++;
     } else {
       await db.deleteFrom('kysely_migrations').where('name', '=', from).execute();
+      counts.deleted++;
     }
   }
 
@@ -88,7 +93,24 @@ const bootstrapGalleryLedger = async (db: Kysely<any>, galleryNames: string[]) =
     .expression(forkRows)
     .onConflict((oc) => oc.column('name').doNothing())
     .execute();
-  await db.deleteFrom('kysely_migrations').where('name', 'in', galleryNames).execute();
+  const [moved] = await db.deleteFrom('kysely_migrations').where('name', 'in', galleryNames).execute();
+  counts.moved = Number(moved.numDeletedRows);
+
+  // Kysely would refuse these too, but only as "previously executed migration ... is missing".
+  const upstreamFiles = new Set(upstreamNames);
+  const unknown = recordedRows
+    .map(({ name }) => name as string)
+    .filter((name) => !upstreamFiles.has(name) && !galleryNames.includes(name) && !(name in renamedMigrations));
+  if (unknown.length > 0) {
+    throw new Error(
+      `This database was migrated by a newer Immich release than Gallery ${serverVersion} is based on: ` +
+        `migration "${unknown.toSorted()[0]}" is not part of it. Gallery ${serverVersion} supports Immich databases ` +
+        `up to migration "${upstreamNames.at(-1)}". Restore the database backup taken before the newer Immich ` +
+        `started, or wait for a Gallery release based on that Immich version. Nothing was changed.`,
+    );
+  }
+
+  return counts;
 };
 
 const pendingNames = async (migrator: Migrator) => {
@@ -111,8 +133,10 @@ const migrationNames = async (migrator: Migrator) => {
 export const migrateGalleryToLatest = async (
   db: Kysely<any>,
   createUpstreamMigrator: (db: Kysely<any>) => Migrator,
+  logger: LoggingRepository,
 ): Promise<MigrationResultSet> => {
   const results: MigrationResult[] = [];
+  let ledger = { renamed: 0, deleted: 0, moved: 0 };
   const collect = async (resultSet: Promise<MigrationResultSet>) => {
     const { error, results: step = [] } = await resultSet;
     results.push(...step);
@@ -125,7 +149,7 @@ export const migrateGalleryToLatest = async (
     await db.transaction().execute(async (trx) => {
       const upstream = createUpstreamMigrator(trx);
       const gallery = createGalleryMigrator(trx);
-      await bootstrapGalleryLedger(trx, await migrationNames(gallery));
+      ledger = await bootstrapGalleryLedger(trx, await migrationNames(gallery), await migrationNames(upstream));
 
       const owners = new Map<string, Migrator>();
       for (const migrator of [upstream, gallery]) {
@@ -144,6 +168,15 @@ export const migrateGalleryToLatest = async (
   } catch (error) {
     return { error, results };
   }
+
+  const { renamed, deleted, moved } = ledger;
+  const message = `Migration ledgers: ${renamed} renamed, ${deleted} deleted, ${moved} moved to gallery_migrations`;
+  // Non-zero only on the first boot of a database from before the ledger split.
+  if (renamed + deleted + moved > 0) {
+    logger.log(message);
+  } else {
+    logger.debug(message);
+  }
   return { results };
 };
 
@@ -154,7 +187,8 @@ export const revertLastGalleryMigration = async (
 ): Promise<MigrationResultSet> => {
   const gallery = createGalleryMigrator(db);
   const galleryNames = await migrationNames(gallery);
-  await db.transaction().execute((trx) => bootstrapGalleryLedger(trx, galleryNames));
+  const upstreamNames = await migrationNames(createUpstreamMigrator(db));
+  await db.transaction().execute((trx) => bootstrapGalleryLedger(trx, galleryNames, upstreamNames));
   const migrations = await gallery.getMigrations();
   const hasForkMigrations = migrations.some(({ executedAt }) => executedAt);
   return (hasForkMigrations ? gallery : createUpstreamMigrator(db)).migrateDown();

@@ -322,6 +322,9 @@ features:
       - .github/workflows/docs-deploy.yml
       - server/src/schema/migrations-gallery/**
       - server/bin/sync-gallery-migrations.mjs
+      - server/src/bin/gallery-migrations.ts
+      - server/src/schema/gallery-migration-ledger.ts
+      - server/src/schema/gallery.ts
       - tools/upstream-preflight/**
       - scripts/spec-citation-check.sh
       - scripts/upstream-review-pr.sh

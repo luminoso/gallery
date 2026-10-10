@@ -405,7 +405,7 @@ export class DatabaseRepository {
   async runMigrations(): Promise<number> {
     this.logger.log('Running migrations');
 
-    const { error, results = [] } = await migrateGalleryToLatest(this.db, (db) => this.createMigrator(db));
+    const { error, results = [] } = await migrateGalleryToLatest(this.db, (db) => this.createMigrator(db), this.logger);
 
     for (const result of results) {
       if (result.status === 'Success') {
