@@ -27,6 +27,11 @@ on:
       - 'server/src/schema/migrations/**'
       - 'branding/config.json'
       - 'server/package.json'
+      # The seed phase runs the PR's server, so its stock-client sync gating must trigger this too.
+      - 'server/src/services/sync.service.ts'
+      - 'server/src/repositories/sync.repository.ts'
+      - 'server/src/dtos/sync.dto.ts'
+      - 'server/src/gallery/client-version.ts'
       - '.github/workflows/gallery-revert-to-immich-validation.yml'
       - '.github/scripts/revert-to-immich-data.sh'
 

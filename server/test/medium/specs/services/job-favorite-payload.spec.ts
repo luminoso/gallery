@@ -19,7 +19,7 @@ import { getKyselyDB } from 'test/utils.js';
 // this is a LIVE staleness bug, not incidental tsc fallout from the slice-3 column drop.
 //
 // These events are always sent to the asset's OWNER (`this.websocketRepository.clientSend(event,
-// asset.ownerId, ...)` / `clientSendByClient`), so the correct semantics are the OWNER's favorite state — exactly what
+// asset.ownerId, ...)` / `clientSendByClient`), so the correct semantics are the OWNER's favorite state, exactly what
 // `favoriteExistsForOwner` (src/utils/favorite.ts) resolves. This spec seeds the OWNER's favorite
 // via the `asset_favorite` overlay ONLY (never the raw column — the app no longer writes it) and
 // asserts the emitted payload reflects it, then asserts a NON-owner's favorite does not leak onto
