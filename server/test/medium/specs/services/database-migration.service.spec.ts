@@ -173,7 +173,8 @@ describe('Database Migration Scenarios', { timeout: 60_000 }, () => {
     }));
 
   // Scenario C2: a Gallery database that recorded ChangeDurationToInteger only under its pre-rename
-  // name. Re-running the migration would fail on the already-integer column, so the row is renamed.
+  // name. Without a rename the old row has no file and Kysely refuses to boot; the bootstrap renames it
+  // so the migration's own already-integer guard is never relied on.
   it('should rename a pre-rename ChangeDurationToInteger row instead of re-running the migration', () =>
     withDatabase('migration_test_prerename', async (db) => {
       const { error } = await preSplitGalleryMigrator(db).migrateToLatest();

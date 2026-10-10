@@ -11,6 +11,7 @@ const GALLERY_MIGRATION_TABLE = 'gallery_migrations';
 // migration, or to null when the row is simply dropped.
 const renamedMigrations: Record<string, string | null> = {
   // Upstream re-timestamped this migration (immich-28191) after Gallery databases had recorded it.
+  // The migration file also keeps a fork no-op guard for an already-integer column, as a fallback.
   '1776735180298-ChangeDurationToInteger': '1777667825574-ChangeDurationToInteger',
   // Fork migrations renumbered off timestamp collisions after RC/staging databases had recorded them.
   '1772810000000-AddThumbnailCropYToSharedSpace': '1772815000000-AddThumbnailCropYToSharedSpace',

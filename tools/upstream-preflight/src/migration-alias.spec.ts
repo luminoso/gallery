@@ -8,9 +8,9 @@ import { describe, expect, it } from 'vitest';
 // name that no longer has a file. The ChangeDurationToInteger entry is LOAD-BEARING: upstream
 // re-timestamped that migration from `1776735180298` to `1777667825574` after Gallery databases had
 // recorded the old name. Kysely hard-fails on boot (`#ensureNoMissingMigrations`) when a recorded
-// name has no file, and re-running the migration fails on the already-integer column, so the row
-// must be renamed before upstream's migrator runs. Dropping the entry would brick those databases on
-// their next upgrade.
+// name has no file, so the row must be renamed before upstream's migrator runs. Dropping the entry
+// would brick those databases on their next upgrade. (The migration file keeps a fork guard that makes
+// a re-run on an already-integer column a no-op, as defence in depth; it does not replace the rename.)
 
 const LEDGER_PATH = path.resolve(
   process.cwd(),
