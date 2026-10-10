@@ -84,7 +84,6 @@ jobs:
               # fork-deletions.spec.ts asserts paths the fork deleted on purpose stay deleted, so the
               # job has to run on a PR that resurrects one.
               - 'packages/**'
-              - 'mobile/android/app/src/main/res/drawable/**'
             .github:
               - '.github/**'
           force-filters: |
