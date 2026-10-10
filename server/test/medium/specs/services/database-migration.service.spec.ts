@@ -3,6 +3,7 @@ import { Kysely, sql } from 'kysely';
 import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { serverVersion } from 'src/constants.js';
 import { ConfigRepository } from 'src/repositories/config.repository.js';
 import { DatabaseRepository } from 'src/repositories/database.repository.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
@@ -262,6 +263,28 @@ describe('Database Migration Scenarios', { timeout: 60_000 }, () => {
       await createRepo(db).runMigrations();
 
       await expectSplitLedgers(db);
+    }));
+
+  // Scenario C6: an Immich newer than Gallery's base recorded an upstream migration this build does not
+  // ship. Boot must still fail and change nothing, but say why and name the supported limit.
+  it('should refuse a database migrated by a newer Immich with an actionable error', () =>
+    withDatabase('migration_test_newer_immich', async (db) => {
+      const { error } = await stockImmichMigrator(db).migrateToLatest();
+      expect(error).toBeUndefined();
+      await insertLedgerRow(db, '1899999999999-FromANewerImmich');
+      const immichLedger = await ledger(db, 'kysely_migrations');
+      const upstreamNames = await fileNames(upstreamFolder);
+
+      await expect(createRepo(db).runMigrations()).rejects.toThrow(
+        `migration "1899999999999-FromANewerImmich" is not part of it. Gallery ${serverVersion} supports Immich ` +
+          `databases up to migration "${upstreamNames.at(-1)}"`,
+      );
+
+      expect(await ledger(db, 'kysely_migrations')).toEqual(immichLedger);
+      const { rows } = await sql<{ exists: boolean }>`
+        SELECT to_regclass('gallery_migrations') IS NOT NULL AS "exists"
+      `.execute(db);
+      expect(rows[0].exists).toBe(false);
     }));
 
   // Scenario D: Rollback reverts the newest fork migration first and leaves upstream's ledger alone
