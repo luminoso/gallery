@@ -276,8 +276,8 @@ describe('Database Migration Scenarios', { timeout: 60_000 }, () => {
       const upstreamNames = await fileNames(upstreamFolder);
 
       await expect(createRepo(db).runMigrations()).rejects.toThrow(
-        `migration "1899999999999-FromANewerImmich" is not part of it. Gallery ${serverVersion} supports Immich ` +
-          `databases up to migration "${upstreamNames.at(-1)}"`,
+        `migration "1899999999999-FromANewerImmich" is not part of it (or was renamed since). ` +
+          `Gallery ${serverVersion} supports Immich databases up to migration "${upstreamNames.at(-1)}"`,
       );
 
       expect(await ledger(db, 'kysely_migrations')).toEqual(immichLedger);

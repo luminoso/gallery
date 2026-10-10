@@ -100,13 +100,16 @@ const bootstrapGalleryLedger = async (db: Kysely<any>, galleryNames: string[], u
   const upstreamFiles = new Set(upstreamNames);
   const unknown = recordedRows
     .map(({ name }) => name as string)
-    .filter((name) => !upstreamFiles.has(name) && !galleryNames.includes(name) && !(name in renamedMigrations));
+    .filter(
+      (name) => !upstreamFiles.has(name) && !galleryNames.includes(name) && !Object.hasOwn(renamedMigrations, name),
+    );
   if (unknown.length > 0) {
     throw new Error(
       `This database was migrated by a newer Immich release than Gallery ${serverVersion} is based on: ` +
-        `migration "${unknown.toSorted()[0]}" is not part of it. Gallery ${serverVersion} supports Immich databases ` +
-        `up to migration "${upstreamNames.at(-1)}". Restore the database backup taken before the newer Immich ` +
-        `started, or wait for a Gallery release based on that Immich version. Nothing was changed.`,
+        `migration "${unknown.toSorted()[0]}" is not part of it (or was renamed since). ` +
+        `Gallery ${serverVersion} supports Immich databases up to migration "${upstreamNames.at(-1)}". ` +
+        `Restore the database backup taken before the newer Immich started, ` +
+        `or wait for a Gallery release based on that Immich version. Nothing was changed.`,
     );
   }
 
