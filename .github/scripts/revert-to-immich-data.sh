@@ -6,7 +6,7 @@
 #   revert-to-immich-data.sh s3-guard      no server running; the script must refuse an S3 path
 #   revert-to-immich-data.sh assert        stock Immich server running on :2283, after the revert
 #
-# Expects containers named `server` and `database`. SYNC_TYPES (assert) is a JSON array of the
+# Expects containers named `server` and `database`. SYNC_TYPES (seed, assert) is a JSON array of the
 # request types a stock mobile app sends: the newest version of each stock SyncRequestType (a
 # deprecated type throws mid-stream and the response never ends). State passes between phases
 # through $STATE_DIR.
@@ -139,16 +139,27 @@ seed() {
   partner_link=$(api GET "/shared-links/$partner_link_id" "$owner" | jq -r .key)
   psql_q "INSERT INTO shared_link_asset (\"sharedLinkId\", \"assetId\") VALUES ('$partner_link_id', '$partner_archived')" >/dev/null
 
-  # Album links made from the space: one to the member's album, one to the owner's own album.
-  local member_album owner_album member_album_link owner_album_link
+  # Album links the owner made from the space: to the member's album (no album role), to member
+  # albums shared with the owner as editor and as viewer, and to the owner's own album.
+  local member_album owner_album editor_album viewer_album
   member_album=$(api POST /albums "$member" "{\"albumName\":\"Member album\",\"assetIds\":[\"$member_photo\"]}" | jq -r .id)
   owner_album=$(api POST /albums "$owner" "{\"albumName\":\"Owner album\",\"assetIds\":[\"$photo_a\"]}" | jq -r .id)
+  editor_album=$(api POST /albums "$member" \
+    "{\"albumName\":\"Editor album\",\"albumUsers\":[{\"userId\":\"$owner_id\",\"role\":\"editor\"}]}" | jq -r .id)
+  viewer_album=$(api POST /albums "$member" \
+    "{\"albumName\":\"Viewer album\",\"albumUsers\":[{\"userId\":\"$owner_id\",\"role\":\"viewer\"}]}" | jq -r .id)
   api PUT "/shared-spaces/$space/albums/$member_album" "$member" >/dev/null
   api PUT "/shared-spaces/$space/albums/$owner_album" "$owner" >/dev/null
-  member_album_link=$(api POST /shared-links "$owner" \
-    "{\"type\":\"ALBUM\",\"spaceId\":\"$space\",\"albumId\":\"$member_album\"}" | jq -r .key)
-  owner_album_link=$(api POST /shared-links "$owner" \
-    "{\"type\":\"ALBUM\",\"spaceId\":\"$space\",\"albumId\":\"$owner_album\"}" | jq -r .key)
+  api PUT "/shared-spaces/$space/albums/$editor_album" "$member" >/dev/null
+  api PUT "/shared-spaces/$space/albums/$viewer_album" "$member" >/dev/null
+  album_link() {
+    api POST /shared-links "$owner" "{\"type\":\"ALBUM\",\"spaceId\":\"$space\",\"albumId\":\"$1\"}" | jq -r .key
+  }
+  local member_album_link owner_album_link editor_album_link viewer_album_link
+  member_album_link=$(album_link "$member_album")
+  owner_album_link=$(album_link "$owner_album")
+  editor_album_link=$(album_link "$editor_album")
+  viewer_album_link=$(album_link "$viewer_album")
   [ "$(status GET "/assets/$member_photo?key=$member_album_link")" = 200 ] ||
     fail "seed: the space album link does not serve the member's album on Gallery"
 
@@ -169,6 +180,11 @@ seed() {
     INSERT INTO asset_face (\"assetId\", \"personGroupId\") SELECT '$photo_a', \"personGroupId\" FROM p;
   " >/dev/null
 
+  # The same stock request against Gallery itself: the gating, not the revert, keeps these out.
+  failed=0
+  stock_sync_checks seed "$owner"
+  [ "$failed" = 0 ] || exit 1
+
   cat >"$STATE" <<EOF
 OWNER_ID=$owner_id
 PHOTO_A=$photo_a
@@ -180,6 +196,8 @@ MIXED_LINK=$mixed_link
 MEMBER_LINK=$member_link
 MEMBER_ALBUM_LINK=$member_album_link
 OWNER_ALBUM_LINK=$owner_album_link
+EDITOR_ALBUM_LINK=$editor_album_link
+VIEWER_ALBUM_LINK=$viewer_album_link
 PARTNER_PHOTO=$partner_photo
 PARTNER_ARCHIVED=$partner_archived
 PARTNER_LINK=$partner_link
@@ -202,11 +220,27 @@ s3_guard() {
   echo "::notice::s3-guard: revert refused an S3 path and left the database untouched"
 }
 
+# check PHASE NAME ACTUAL EXPECTED; sets failed=1 on a mismatch
 check() {
-  if [ "$2" != "$3" ]; then
-    echo "::error::assert: $1: expected '$3', got '$2'"
+  if [ "$3" != "$4" ]; then
+    echo "::error::$1: $2: expected '$4', got '$3'"
     failed=1
   fi
+}
+
+# stock_sync_checks PHASE TOKEN: what a stock mobile app would receive. The server streams whatever it
+# sends; the stock app is what fails to decode a value its enums lack. So check the rows themselves.
+stock_sync_checks() {
+  local phase=$1 body
+  body=$(curl -fsS --max-time 120 -X POST "$API/sync/stream" -H "Authorization: Bearer $2" \
+    -H 'Content-Type: application/json' --data "{\"types\":${SYNC_TYPES:?}}") || {
+    echo "::error::$phase: stock /sync/stream request failed"
+    failed=1
+  }
+  check "$phase" 'sync stream completes' "$(jq -r .type <<<"$body" | tail -n1)" SyncCompleteV1
+  check "$phase" 'sync sends no trim edit' "$(jq -c 'select(.type == "AssetEditV1" and .data.action == "trim")' <<<"$body")" ''
+  check "$phase" 'sync sends no rule memory' "$(jq -c 'select((.type | startswith("MemoryV")) and .data.type == "rule")' <<<"$body")" ''
+  check "$phase" 'sync sends no pet' "$(jq -c 'select(.type == "PersonV1" and .data.name == "Revert Pet")' <<<"$body")" ''
 }
 
 # shellcheck disable=SC2153 # vars come from the sourced $STATE file
@@ -217,45 +251,36 @@ assert() {
   local owner
   owner=$(login owner@example.com)
 
-  check 'original downloads' "$(api GET "/assets/$PHOTO_A/original" "$owner" | sha1sum | cut -d' ' -f1)" "$PHOTO_A_SHA"
-  check 'owner favorite kept' "$(api GET "/assets/$PHOTO_A" "$owner" | jq -r .isFavorite)" true
-  check 'non-owner favorite not promoted' "$(api GET "/assets/$PHOTO_B" "$owner" | jq -r .isFavorite)" false
+  check assert 'original downloads' "$(api GET "/assets/$PHOTO_A/original" "$owner" | sha1sum | cut -d' ' -f1)" "$PHOTO_A_SHA"
+  check assert 'owner favorite kept' "$(api GET "/assets/$PHOTO_A" "$owner" | jq -r .isFavorite)" true
+  check assert 'non-owner favorite not promoted' "$(api GET "/assets/$PHOTO_B" "$owner" | jq -r .isFavorite)" false
 
-  check 'pet person removed' "$(psql_q "SELECT count(*) FROM person WHERE name = 'Revert Pet'")" 0
-  check 'pet faces removed' "$(psql_q "SELECT count(*) FROM asset_face WHERE \"assetId\" = '$PHOTO_B'")" 0
-  check 'human face kept' "$(psql_q "SELECT count(*) FROM asset_face f JOIN person p ON p.\"personGroupId\" = f.\"personGroupId\" WHERE p.name = 'Revert Human'")" 1
-  check 'pet absent from people API' "$(api GET /people "$owner" | jq '[.people[] | select(.name == "Revert Pet")] | length')" 0
+  check assert 'pet person removed' "$(psql_q "SELECT count(*) FROM person WHERE name = 'Revert Pet'")" 0
+  check assert 'pet faces removed' "$(psql_q "SELECT count(*) FROM asset_face WHERE \"assetId\" = '$PHOTO_B'")" 0
+  check assert 'human face kept' "$(psql_q "SELECT count(*) FROM asset_face f JOIN person p ON p.\"personGroupId\" = f.\"personGroupId\" WHERE p.name = 'Revert Human'")" 1
+  check assert 'pet absent from people API' "$(api GET /people "$owner" | jq '[.people[] | select(.name == "Revert Pet")] | length')" 0
 
-  check 'rule memory removed' "$(psql_q "SELECT count(*) FROM memory WHERE type = 'rule'")" 0
-  check 'memories API returns no rule' "$(api GET /memories "$owner" | jq '[.[] | select(.type == "rule")] | length')" 0
+  check assert 'rule memory removed' "$(psql_q "SELECT count(*) FROM memory WHERE type = 'rule'")" 0
+  check assert 'memories API returns no rule' "$(api GET /memories "$owner" | jq '[.[] | select(.type == "rule")] | length')" 0
 
-  check 'trim duration restored' "$(psql_q "SELECT duration FROM asset WHERE id = '$VIDEO'")" "$ORIGINAL_DURATION"
-  check 'trim edit removed' "$(psql_q "SELECT count(*) FROM asset_edit WHERE \"assetId\" = '$VIDEO'")" 0
-  check 'trimmed files unreferenced' "$(psql_q "SELECT count(*) FROM asset_file WHERE \"assetId\" = '$VIDEO' AND \"isEdited\"")" 0
-  check 'trimmed thumbhash cleared' "$(psql_q "SELECT thumbhash IS NULL FROM asset WHERE id = '$VIDEO'")" t
+  check assert 'trim duration restored' "$(psql_q "SELECT duration FROM asset WHERE id = '$VIDEO'")" "$ORIGINAL_DURATION"
+  check assert 'trim edit removed' "$(psql_q "SELECT count(*) FROM asset_edit WHERE \"assetId\" = '$VIDEO'")" 0
+  check assert 'trimmed files unreferenced' "$(psql_q "SELECT count(*) FROM asset_file WHERE \"assetId\" = '$VIDEO' AND \"isEdited\"")" 0
+  check assert 'trimmed thumbhash cleared' "$(psql_q "SELECT thumbhash IS NULL FROM asset WHERE id = '$VIDEO'")" t
 
-  check 'space link keeps own photo' "$(status GET "/assets/$PHOTO_A?key=$MIXED_LINK")" 200
-  check "space link stops serving the member's photo" "$(status GET "/assets/$MEMBER_PHOTO?key=$MIXED_LINK")" 400
-  check "space link lists only the owner's photo" \
+  check assert 'space link keeps own photo' "$(status GET "/assets/$PHOTO_A?key=$MIXED_LINK")" 200
+  check assert "space link stops serving the member's photo" "$(status GET "/assets/$MEMBER_PHOTO?key=$MIXED_LINK")" 400
+  check assert "space link lists only the owner's photo" \
     "$(api GET "/shared-links/me?key=$MIXED_LINK" '' | jq -c '[.assets[].id]')" "[\"$PHOTO_A\"]"
-  check 'space link with only the member photo removed' "$(status GET "/shared-links/me?key=$MEMBER_LINK")" 401
-  check "space album link to the member's album removed" "$(status GET "/shared-links/me?key=$MEMBER_ALBUM_LINK")" 401
-  check "partner link keeps the partner's photo" "$(status GET "/assets/$PARTNER_PHOTO?key=$PARTNER_LINK")" 200
-  check "partner link stops serving the archived photo" "$(status GET "/assets/$PARTNER_ARCHIVED?key=$PARTNER_LINK")" 400
-  check "space album link to the owner's album kept" "$(status GET "/shared-links/me?key=$OWNER_ALBUM_LINK")" 200
+  check assert 'space link with only the member photo removed' "$(status GET "/shared-links/me?key=$MEMBER_LINK")" 401
+  check assert "space album link to the member's album removed" "$(status GET "/shared-links/me?key=$MEMBER_ALBUM_LINK")" 401
+  check assert "partner link keeps the partner's photo" "$(status GET "/assets/$PARTNER_PHOTO?key=$PARTNER_LINK")" 200
+  check assert "partner link stops serving the archived photo" "$(status GET "/assets/$PARTNER_ARCHIVED?key=$PARTNER_LINK")" 400
+  check assert "space album link to the owner's album kept" "$(status GET "/shared-links/me?key=$OWNER_ALBUM_LINK")" 200
+  check assert "space album link to an album the owner edits kept" "$(status GET "/shared-links/me?key=$EDITOR_ALBUM_LINK")" 200
+  check assert "space album link to an album the owner only views removed" "$(status GET "/shared-links/me?key=$VIEWER_ALBUM_LINK")" 401
 
-  # The stock server streams whatever is in the database; the stock app is what fails to decode a
-  # value its enums lack. So check the rows themselves, not only the status.
-  local body
-  body=$(curl -fsS --max-time 120 -X POST "$API/sync/stream" -H "Authorization: Bearer $owner" \
-    -H 'Content-Type: application/json' --data "{\"types\":${SYNC_TYPES:?}}") || {
-    echo "::error::assert: stock /sync/stream request failed"
-    failed=1
-  }
-  check 'sync stream completes' "$(jq -r .type <<<"$body" | tail -n1)" SyncCompleteV1
-  check 'sync sends no trim edit' "$(jq -c 'select(.type == "AssetEditV1" and .data.action == "trim")' <<<"$body")" ''
-  check 'sync sends no rule memory' "$(jq -c 'select((.type | startswith("MemoryV")) and .data.type == "rule")' <<<"$body")" ''
-  check 'sync sends no pet' "$(jq -c 'select(.type == "PersonV1" and .data.name == "Revert Pet")' <<<"$body")" ''
+  stock_sync_checks assert "$owner"
 
   [ "$failed" = 0 ] || exit 1
   echo "::notice::assert: reverted data checks passed on stock Immich"

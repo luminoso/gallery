@@ -11,7 +11,7 @@ This guide walks through switching a Gallery instance back to upstream [Immich](
 - Pet detection results, and every individual pet you named through pet recognition. Pets are removed completely, so they do not come back as people.
 - Rule memories. Immich only has "On this day" and birthday memories.
 - Video trims. Trimmed videos go back to their full length.
-- Photos in share links that the link creator could not have shared in plain Immich. Links that are left with no photos are deleted, and so are album links made from a space to albums the link creator does not own, even when the creator can edit that album.
+- Photos in share links that the link creator could not have shared in plain Immich. Links that are left with no photos are deleted, and so are album links made from a space to albums the link creator neither owns nor was added to as an editor.
 - Asset duplicate checksums
 - Library sync state
 - Favorites belonging to anyone other than the asset's owner (see note below)
@@ -146,7 +146,7 @@ Here is what the cleanup script changes:
 - It deletes rule memories, which the Immich mobile app cannot read.
 - It undoes video trims: the original duration comes back, and the trim and its trimmed video and thumbnails are no longer referenced. Those files stay on disk. The blurred placeholder Immich shows while a thumbnail loads is cleared and rebuilt from the original by the nightly missing thumbnails task.
 - It removes from share links every photo the link creator could not share in plain Immich. The creator keeps their own photos, and a partner's photos only while that partner still shares with them, the partner's account is not deleted, and the photo is not archived or locked. Gallery hid the other photos once they left the space; Immich would keep showing them. Links left with no photos are deleted.
-- It deletes album links made from a space to albums the link creator does not own. This is stricter than Immich, which also lets album editors share an album, so such a link an editor created is deleted too. Album links made outside a space are kept.
+- It deletes album links made from a space to albums the link creator neither owns nor was added to as an editor, the same rule Immich uses for sharing an album. Being a member of the space is not enough: Immich does not know about spaces. Album links made outside a space are kept.
 - It removes Gallery-only settings rows from `system_metadata` and Gallery-only permissions from API keys.
 - It drops the Gallery-only functions and triggers that reference the dropped tables.
 - It strips the `classification` key out of the `system-config` row in `system_metadata`.

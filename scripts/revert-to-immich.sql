@@ -23,7 +23,8 @@
 --   * Video trims: the original duration comes back and the trimmed copy is
 --     no longer referenced
 --   * Other members' photos in links shared from a space, album links to
---     albums the creator does not own, and asset links left empty by that
+--     albums the creator neither owns nor edits, and asset links left empty
+--     by that
 --   * Gallery-only API key permissions
 --   * Asset duplicate checksums
 --   * Library sync state (library_audit, library_user, library.createId)
@@ -174,9 +175,9 @@ DELETE FROM "asset_edit" WHERE "action" = 'trim';
 -- with no such check. So keep only what the creator could have shared in plain
 -- Immich (own assets, and partners' assets under the same conditions as
 -- Immich's asset share permission), drop album links to albums the creator
--- does not own, and drop asset links this leaves empty.
--- Album links go even when the creator is an editor of the album: this is
--- deliberately stricter than Immich, which lets album editors share an album.
+-- neither owns nor edits (Immich's album share permission), and drop asset
+-- links this leaves empty. Space access to an album lives in the dropped
+-- shared_space_album* tables, never in album_user.
 -- The asset prune covers every link, not only those with a "spaceId": deleting
 -- a space sets the column to NULL but keeps the other members' asset rows. It
 -- also drops assets of partners removed since the link was made.
@@ -206,7 +207,7 @@ BEGIN
      WHERE sl."spaceId" IS NOT NULL
        AND sl."type" = 'ALBUM'
        AND NOT EXISTS (SELECT FROM "album_user" au
-                        WHERE au."albumId" = sl."albumId" AND au."userId" = sl."userId" AND au."role" = 'owner');
+                        WHERE au."albumId" = sl."albumId" AND au."userId" = sl."userId" AND au."role" IN ('owner', 'editor'));
     DELETE FROM "shared_link" sl
      WHERE sl."spaceId" IS NOT NULL
        AND sl."type" = 'INDIVIDUAL'
