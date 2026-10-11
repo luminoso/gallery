@@ -3,8 +3,9 @@ part of 'timeline.repository.dart';
 /// Gallery timeline queries. Every route the app opens goes through here: the Space timelines,
 /// the viewer-visibility scopes (partners and Spaces on video, place, map and favorites), the
 /// fork's main timeline (shared_space_timeline.drift) and the temporal scope applied to every
-/// route. Upstream routes this file reuses keep their bodies in [TimelineRepository]; the only
-/// seam there is the optional `extraWhere` on the album builders.
+/// route. Upstream routes this file reuses keep their bodies in [TimelineRepository]; the fork
+/// hunks there are an optional `extraWhere` on the four album builders, the `GroupAssetsBy.none`
+/// counts rewritten as asset joins (the remote one carries `deletedAt IS NULL`) and the year arms.
 class SharedSpaceTimelineRepository {
   final TimelineRepository _timeline;
 
@@ -126,6 +127,9 @@ class SharedSpaceTimelineRepository {
         _db.sharedSpaceAssetEntity,
         _db.sharedSpaceLibraryEntity,
         _db.sharedSpaceMemberEntity,
+        _db.sharedSpaceAlbumAssetEntity,
+        _db.sharedSpaceAlbumLinkEntity,
+        _db.sharedSpaceAlbumHiddenEntity,
         _db.localAssetEntity,
         _db.localAlbumAssetEntity,
         _db.localAlbumEntity,
@@ -160,6 +164,9 @@ class SharedSpaceTimelineRepository {
             _db.sharedSpaceAssetEntity,
             _db.sharedSpaceLibraryEntity,
             _db.sharedSpaceMemberEntity,
+            _db.sharedSpaceAlbumAssetEntity,
+            _db.sharedSpaceAlbumLinkEntity,
+            _db.sharedSpaceAlbumHiddenEntity,
             _db.localAssetEntity,
             _db.localAlbumAssetEntity,
             _db.localAlbumEntity,
@@ -1357,6 +1364,8 @@ List<Variable<Object>> _scopedMainVariables(
   ];
 }
 
+// Same ownership and Space predicate as spaceMergedAsset/spaceMergedBucket in
+// shared_space_timeline.drift (album-link leg and the #1041 owner hide included); keep them in step.
 String _scopedMainRemoteWhere(List<String> userIds) {
   final userIdsSql = _sqlPlaceholders(userIds.length, start: 4);
   return '''
@@ -1365,7 +1374,42 @@ AND rae.visibility = 0
 AND COALESCE(STRFTIME('%Y-%m-%d', rae.local_date_time), STRFTIME('%Y-%m-%d', rae.created_at, 'localtime')) >= ?2
 AND COALESCE(STRFTIME('%Y-%m-%d', rae.local_date_time), STRFTIME('%Y-%m-%d', rae.created_at, 'localtime')) <= ?3
 AND (
-  rae.owner_id IN ($userIdsSql)
+  (
+    (rae.owner_id IN ($userIdsSql) AND rae.owner_id != ?1)
+    OR (
+      rae.owner_id = ?1
+      AND NOT EXISTS (
+        SELECT 1 FROM shared_space_asset_entity ssa
+        INNER JOIN shared_space_member_entity ssm ON ssm.space_id = ssa.space_id
+        WHERE ssa.asset_id = rae.id
+          AND ssm.user_id = ?1
+          AND ssm.show_in_timeline = 0
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM shared_space_library_entity ssl
+        INNER JOIN shared_space_member_entity ssm ON ssm.space_id = ssl.space_id
+        WHERE ssl.library_id = rae.library_id
+          AND ssm.user_id = ?1
+          AND ssm.show_in_timeline = 0
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM shared_space_album_asset_entity ssaa
+        INNER JOIN shared_space_album_link_entity ssal ON ssal.album_id = ssaa.album_id
+        INNER JOIN shared_space_member_entity ssm ON ssm.space_id = ssal.space_id
+        WHERE ssaa.asset_id = rae.id
+          AND ssm.user_id = ?1
+          AND (
+            ssm.show_in_timeline = 0
+            OR EXISTS (
+              SELECT 1 FROM shared_space_album_hidden_entity ssah
+              WHERE ssah.space_id = ssal.space_id
+                AND ssah.album_id = ssal.album_id
+                AND ssah.user_id = ?1
+            )
+          )
+      )
+    )
+  )
   OR EXISTS (
     SELECT 1 FROM shared_space_asset_entity ssa
     INNER JOIN shared_space_member_entity ssm ON ssm.space_id = ssa.space_id
@@ -1377,6 +1421,20 @@ AND (
     SELECT 1 FROM shared_space_library_entity ssl
     INNER JOIN shared_space_member_entity ssm ON ssm.space_id = ssl.space_id
     WHERE ssl.library_id = rae.library_id
+      AND ssm.user_id = ?1
+      AND ssm.show_in_timeline = 1
+  )
+  OR EXISTS (
+    SELECT 1 FROM shared_space_album_asset_entity ssaa
+    INNER JOIN shared_space_album_link_entity ssal ON ssal.album_id = ssaa.album_id
+    INNER JOIN shared_space_member_entity ssm ON ssm.space_id = ssal.space_id
+    WHERE ssaa.asset_id = rae.id
+      AND NOT EXISTS (
+        SELECT 1 FROM shared_space_album_hidden_entity ssah
+        WHERE ssah.space_id = ssal.space_id
+          AND ssah.album_id = ssal.album_id
+          AND ssah.user_id = ?1
+      )
       AND ssm.user_id = ?1
       AND ssm.show_in_timeline = 1
   )
