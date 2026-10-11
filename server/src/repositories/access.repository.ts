@@ -618,6 +618,7 @@ class AssetAccess {
         .leftJoin('album', (join) =>
           join.onRef('album.id', '=', 'shared_link.albumId').on('album.deletedAt', 'is', null),
         )
+        .leftJoin('shared_link_space', 'shared_link_space.sharedLinkId', 'shared_link.id')
         .leftJoin('shared_link_asset', 'shared_link_asset.sharedLinkId', 'shared_link.id')
         .leftJoin('asset', (join) =>
           join
@@ -638,7 +639,7 @@ class AssetAccess {
         .leftJoin('album_space_asset', (join) =>
           join
             .onRef('album_space_asset.albumId', '=', 'album.id')
-            .onRef('album_space_asset.spaceId', '=', 'shared_link.spaceId')
+            .onRef('album_space_asset.spaceId', '=', 'shared_link_space.spaceId')
             .on((eb) =>
               eb.exists(
                 eb

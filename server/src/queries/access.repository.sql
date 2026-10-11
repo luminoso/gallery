@@ -439,20 +439,21 @@ from
   "shared_link"
   left join "album" on "album"."id" = "shared_link"."albumId"
   and "album"."deletedAt" is null
+  left join "shared_link_space" on "shared_link_space"."sharedLinkId" = "shared_link"."id"
   left join "shared_link_asset" on "shared_link_asset"."sharedLinkId" = "shared_link"."id"
   left join "asset" on "asset"."id" = "shared_link_asset"."assetId"
   and "asset"."deletedAt" is null
   and (
     "asset"."ownerId" = "shared_link"."userId"
     or (
-      "shared_link"."spaceId" is not null
+      "shared_link_space"."spaceId" is not null
       and exists (
         select
           1 as "exists"
         from
           "shared_space_member"
         where
-          "shared_space_member"."spaceId" = "shared_link"."spaceId"
+          "shared_space_member"."spaceId" = "shared_link_space"."spaceId"
           and "shared_space_member"."userId" = "shared_link"."userId"
           and "shared_space_member"."role" in ($1, $2)
       )
@@ -465,7 +466,7 @@ from
             "shared_space_asset"
           where
             "shared_space_asset"."assetId" = "asset"."id"
-            and "shared_space_asset"."spaceId" = "shared_link"."spaceId"
+            and "shared_space_asset"."spaceId" = "shared_link_space"."spaceId"
         )
         or exists (
           select
@@ -474,7 +475,7 @@ from
             "shared_space_library"
           where
             "shared_space_library"."libraryId" = "asset"."libraryId"
-            and "shared_space_library"."spaceId" = "shared_link"."spaceId"
+            and "shared_space_library"."spaceId" = "shared_link_space"."spaceId"
         )
         or (
           exists (
@@ -487,7 +488,7 @@ from
               and "album"."deletedAt" is null
             where
               "album_asset"."assetId" = "asset"."id"
-              and "shared_space_album"."spaceId" = "shared_link"."spaceId"
+              and "shared_space_album"."spaceId" = "shared_link_space"."spaceId"
           )
           or exists (
             select
@@ -500,7 +501,7 @@ from
               and "album"."deletedAt" is null
             where
               "album_space_asset"."assetId" = "asset"."id"
-              and "shared_space_album"."spaceId" = "shared_link"."spaceId"
+              and "shared_space_album"."spaceId" = "shared_link_space"."spaceId"
           )
         )
       )
@@ -510,7 +511,7 @@ from
   left join "asset" as "albumAssets" on "albumAssets"."id" = "album_asset"."assetId"
   and "albumAssets"."deletedAt" is null
   left join "album_space_asset" on "album_space_asset"."albumId" = "album"."id"
-  and "album_space_asset"."spaceId" = "shared_link"."spaceId"
+  and "album_space_asset"."spaceId" = "shared_link_space"."spaceId"
   and exists (
     select
       1 as "exists"
@@ -526,7 +527,7 @@ from
     from
       "shared_space_member"
     where
-      "shared_space_member"."spaceId" = "shared_link"."spaceId"
+      "shared_space_member"."spaceId" = "shared_link_space"."spaceId"
       and "shared_space_member"."userId" = "shared_link"."userId"
       and "shared_space_member"."role" in ($5, $6)
   )

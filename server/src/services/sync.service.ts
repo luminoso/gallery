@@ -1002,7 +1002,7 @@ export class SyncService extends BaseService {
   }
 
   // Library assets — deletes first, then per-library backfill loop keyed by
-  // library.createId, then a single upserts stream scoped by accessibleLibraries.
+  // library_user.createId, then a single upserts stream scoped by accessibleLibraries.
   // Mirrors syncPartnerAssetsV1 (NOT syncSharedSpaceAssetsV1): libraries have no
   // per-pairing join-row updateId to gate a separate Updates stream, so all
   // live changes flow through a single getUpserts via `LibraryAssetCreateV1`.

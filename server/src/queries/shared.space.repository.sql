@@ -3319,13 +3319,14 @@ select
   "asset_face"."boundingBoxY2",
   "asset_face"."imageWidth",
   "asset_face"."imageHeight",
-  "asset_face"."createdBy",
+  "asset_face_creator"."userId" as "createdBy",
   "space_person"."id" as "spacePersonId",
   "space_person"."name" as "spacePersonName"
 from
   "asset_face"
   inner join "asset" on "asset"."id" = "asset_face"."assetId"
   left join "person" on "person"."personGroupId" = "asset_face"."personGroupId"
+  left join "asset_face_creator" on "asset_face_creator"."assetFaceId" = "asset_face"."id"
   left join (
     select
       "shared_space_person_face"."assetFaceId",

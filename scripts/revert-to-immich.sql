@@ -178,8 +178,8 @@ DELETE FROM "asset_edit" WHERE "action" = 'trim';
 -- neither owns nor edits (Immich's album share permission), and drop asset
 -- links this leaves empty. Space access to an album lives in the dropped
 -- shared_space_album* tables, never in album_user.
--- The asset prune covers every link, not only those with a "spaceId": deleting
--- a space sets the column to NULL but keeps the other members' asset rows. It
+-- The asset prune covers every link, not only those made from a space: deleting
+-- a space drops the link's space row but keeps the other members' asset rows. It
 -- also drops assets of partners removed since the link was made.
 CREATE TEMP TABLE revert_pruned_link ("id" uuid) ON COMMIT DROP;
 WITH pruned AS (
@@ -199,21 +199,28 @@ DELETE FROM "shared_link" sl
  WHERE sl."type" = 'INDIVIDUAL'
    AND sl."id" IN (SELECT "id" FROM revert_pruned_link)
    AND NOT EXISTS (SELECT FROM "shared_link_asset" sla WHERE sla."sharedLinkId" = sl."id");
+-- Links made from a space: the shared_link_space sidecar (1798000000000), or
+-- the shared_link."spaceId" column it replaced on databases from before it.
+CREATE TEMP TABLE revert_space_link ("id" uuid) ON COMMIT DROP;
 DO $$
 BEGIN
+  IF to_regclass('shared_link_space') IS NOT NULL THEN
+    INSERT INTO revert_space_link SELECT "sharedLinkId" FROM "shared_link_space";
+  END IF;
   IF EXISTS (SELECT FROM information_schema.columns
               WHERE table_schema = 'public' AND table_name = 'shared_link' AND column_name = 'spaceId') THEN
-    DELETE FROM "shared_link" sl
-     WHERE sl."spaceId" IS NOT NULL
-       AND sl."type" = 'ALBUM'
-       AND NOT EXISTS (SELECT FROM "album_user" au
-                        WHERE au."albumId" = sl."albumId" AND au."userId" = sl."userId" AND au."role" IN ('owner', 'editor'));
-    DELETE FROM "shared_link" sl
-     WHERE sl."spaceId" IS NOT NULL
-       AND sl."type" = 'INDIVIDUAL'
-       AND NOT EXISTS (SELECT FROM "shared_link_asset" sla WHERE sla."sharedLinkId" = sl."id");
+    INSERT INTO revert_space_link SELECT "id" FROM "shared_link" WHERE "spaceId" IS NOT NULL;
   END IF;
 END $$;
+DELETE FROM "shared_link" sl
+ WHERE sl."id" IN (SELECT "id" FROM revert_space_link)
+   AND sl."type" = 'ALBUM'
+   AND NOT EXISTS (SELECT FROM "album_user" au
+                    WHERE au."albumId" = sl."albumId" AND au."userId" = sl."userId" AND au."role" IN ('owner', 'editor'));
+DELETE FROM "shared_link" sl
+ WHERE sl."id" IN (SELECT "id" FROM revert_space_link)
+   AND sl."type" = 'INDIVIDUAL'
+   AND NOT EXISTS (SELECT FROM "shared_link_asset" sla WHERE sla."sharedLinkId" = sl."id");
 
 -- Gallery-only system_metadata rows. Immich reads its rows by key and never
 -- looks at these.
@@ -309,6 +316,7 @@ DROP TABLE IF EXISTS "shared_space_library_audit" CASCADE;
 DROP TABLE IF EXISTS "shared_space_library" CASCADE;
 
 -- Shared spaces
+DROP TABLE IF EXISTS "shared_link_space" CASCADE;
 DROP TABLE IF EXISTS "album_space_asset_audit" CASCADE;
 DROP TABLE IF EXISTS "album_space_asset" CASCADE;
 DROP TABLE IF EXISTS "shared_space_activity" CASCADE;
@@ -340,6 +348,7 @@ DROP TABLE IF EXISTS "face_repair_decline" CASCADE;
 DROP TABLE IF EXISTS "face_repair_lock" CASCADE;
 DROP TABLE IF EXISTS "face_repair_scan" CASCADE;
 DROP TABLE IF EXISTS "face_identity_face" CASCADE;
+DROP TABLE IF EXISTS "asset_face_creator" CASCADE;
 DROP TABLE IF EXISTS "face_identity" CASCADE;
 
 -- Pet recognition embeddings
@@ -409,6 +418,7 @@ ALTER TABLE "person"            DROP COLUMN IF EXISTS "type";
 ALTER TABLE "person"            DROP COLUMN IF EXISTS "species";
 ALTER TABLE "asset_job_status"  DROP COLUMN IF EXISTS "petsDetectedAt";
 ALTER TABLE "asset_job_status"  DROP COLUMN IF EXISTS "classifiedAt";
+-- Databases from before 1798200000000-DropLibraryCreateId.
 DROP INDEX IF EXISTS "library_createId_idx";
 ALTER TABLE "library"           DROP COLUMN IF EXISTS "createId";
 -- 1791000000000-RepointFaceReviewToPersonGroup added this unique index to make option M's
@@ -420,13 +430,14 @@ DROP INDEX IF EXISTS "asset_face_personId_idx";
 DROP INDEX IF EXISTS "person_ownerId_identityId_key";
 DROP INDEX IF EXISTS "person_identityId_idx";
 ALTER TABLE "person"            DROP COLUMN IF EXISTS "identityId";
--- #1018: the space a share link was created from. Section 0b already removed
--- what these links could only reach through the space.
+-- #1018: the space a share link was created from, on databases from before
+-- shared_link_space replaced the column. Section 0b already removed what these
+-- links could only reach through the space.
 DROP INDEX IF EXISTS "shared_link_spaceId_idx";
 ALTER TABLE "shared_link"       DROP COLUMN IF EXISTS "spaceId";
 -- Records which user drew a face box, so a space editor may delete their own and never the
--- owner's (1796000000000-AddAssetFaceCreatedBy). Upstream has no such column; the FK to "user"
--- goes with it.
+-- owner's (1796000000000-AddAssetFaceCreatedBy), on databases from before asset_face_creator
+-- replaced the column. Upstream has no such column; the FK to "user" goes with it.
 DROP INDEX IF EXISTS "asset_face_createdBy_idx";
 ALTER TABLE "asset_face"        DROP COLUMN IF EXISTS "createdBy";
 
@@ -738,6 +749,9 @@ DELETE FROM "kysely_migrations"
   '1794100000000-DropAssetIsFavoriteColumn',
   '1796000000000-AddAssetFaceCreatedBy',
   '1797000000000-AddAssetLocalDateTimeIndex',
+  '1798000000000-AddSharedLinkSpaceTable',
+  '1798100000000-AddAssetFaceCreatorTable',
+  '1798200000000-DropLibraryCreateId',
   '1798500000000-AddAssetJobStatusGalleryTable',
   -- Pre-rename name, recorded by builds from before the ledger split: this migration was
   -- renumbered off 1793000000000 when fork PR #1060 took that timestamp, but rolling RC instances
@@ -838,7 +852,8 @@ BEGIN
        'shared_space_album_asset_audit', 'shared_space_album_folder',
        'shared_space_album_folder_audit',
        'album_space_asset_audit', 'album_space_asset',
-       'face_identity_face', 'face_identity',
+       'face_identity_face', 'face_identity', 'asset_face_creator',
+       'shared_link_space',
        'shared_space', 'user_group_member', 'user_group',
        'classification_prompt_embedding', 'classification_category',
        'storage_migration_log', 'asset_duplicate_checksum',

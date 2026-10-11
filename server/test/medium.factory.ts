@@ -260,9 +260,12 @@ export class MediumTestContext<S extends ClassConstructor<typeof BaseService> = 
     return { result };
   }
 
-  async newAssetFace(dto: Partial<Insertable<AssetFace>> & { assetId: string }) {
+  async newAssetFace({ createdBy, ...dto }: Partial<Insertable<AssetFace>> & { assetId: string; createdBy?: string }) {
     const assetFace = mediumFactory.assetFaceInsert(dto);
     const result = await this.get(PersonRepository).createAssetFace(assetFace);
+    if (createdBy) {
+      await this.database.insertInto('asset_face_creator').values({ assetFaceId: result, userId: createdBy }).execute();
+    }
     return { assetFace, result };
   }
 

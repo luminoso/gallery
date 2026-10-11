@@ -1032,7 +1032,17 @@ export class FacePersonVerdictRepository {
     assetFaceId: string,
     db: Kysely<DB> | Transaction<DB> = this.db,
   ): Promise<string | null | undefined> {
-    const row = await db.selectFrom('asset_face').select('createdBy').where('id', '=', assetFaceId).executeTakeFirst();
-    return row?.createdBy;
+    const row = await db
+      .selectFrom('asset_face')
+      .leftJoin('asset_face_creator', 'asset_face_creator.assetFaceId', 'asset_face.id')
+      .select('asset_face_creator.userId')
+      .where('asset_face.id', '=', assetFaceId)
+      .executeTakeFirst();
+    return row && row.userId;
+  }
+
+  /** Spec §6.5: records that `userId` drew this box by hand (see `getFaceCreatedBy`). */
+  async addFaceCreator(assetFaceId: string, userId: string, db: Kysely<DB> | Transaction<DB> = this.db): Promise<void> {
+    await db.insertInto('asset_face_creator').values({ assetFaceId, userId }).execute();
   }
 }
