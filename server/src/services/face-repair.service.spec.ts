@@ -57,7 +57,7 @@ describe(FaceRepairService.name, () => {
       const result = await sut.getAdminFaceThumbnail('face-1');
 
       expect(mocks.person.getFaceByIdIncludingTombstoned).toHaveBeenCalledWith('face-1');
-      expect(mocks.access.person.checkOwnerAccess).not.toHaveBeenCalled();
+      expect(mocks.access.galleryPerson.checkOwnerAccess).not.toHaveBeenCalled();
       expect(mocks.media.generateThumbnail).toHaveBeenCalled();
       if (result instanceof ImmichStreamResponse) {
         result.stream.destroy();
@@ -118,7 +118,7 @@ describe(FaceRepairService.name, () => {
       await sut.getAdminFacePreview('face-1');
 
       expect(mocks.person.getFaceByIdOnLiveAsset).toHaveBeenCalledWith('face-1');
-      expect(mocks.access.person.checkOwnerAccess).not.toHaveBeenCalled();
+      expect(mocks.access.galleryPerson.checkOwnerAccess).not.toHaveBeenCalled();
       expect(mocks.media.generateThumbnail).not.toHaveBeenCalled(); // uncropped: no sharp pass
       expect(mocks.media.decodeImage).not.toHaveBeenCalled();
       expect(serve).toHaveBeenCalledWith('/preview.jpg', 'image/jpeg', CacheControl.PrivateWithCache);

@@ -338,10 +338,10 @@ export class PersonService extends BaseService {
 
   private async requireThumbnailAccess(auth: AuthDto, id: string) {
     const ids = new Set([id]);
-    const ownerAccess = await this.accessRepository.person.checkOwnerAccess(auth.user.id, ids);
+    const ownerAccess = await this.accessRepository.galleryPerson.checkOwnerAccess(auth.user.id, ids);
     const isOwner = ownerAccess.has(id);
     if (!isOwner) {
-      const isShared = await this.accessRepository.person.checkSharedSpaceAccess(auth.user.id, ids);
+      const isShared = await this.accessRepository.galleryPerson.checkSharedSpaceAccess(auth.user.id, ids);
       if (!isShared.has(id)) {
         throw new BadRequestException('Not found or no person.read access');
       }
@@ -355,7 +355,7 @@ export class PersonService extends BaseService {
       return;
     }
 
-    const isUnlocked = await this.accessRepository.person.checkUnlockedThumbnailAccess(ids);
+    const isUnlocked = await this.accessRepository.galleryPerson.checkUnlockedThumbnailAccess(ids);
     if (!isUnlocked.has(id)) {
       throw new BadRequestException('Not found or no person.read access');
     }

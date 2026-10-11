@@ -3,6 +3,7 @@ import { AuthSharedLink } from 'src/database.js';
 import { AuthDto } from 'src/dtos/auth.dto.js';
 import { PersonUserRole } from 'src/dtos/person.dto.js';
 import { AlbumUserRole, Permission } from 'src/enum.js';
+import { withGalleryGrants } from 'src/gallery/access-grants.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
 import { PersonId } from 'src/repositories/person.repository.js';
 import { areSetsEqual, isSetSuperset, setDifference, setUnion } from 'src/utils/set.js';
@@ -103,7 +104,11 @@ export const checkAccess = async (
 
   return auth.sharedLink
     ? checkSharedLinkAccess(access, { sharedLink: auth.sharedLink, permission, ids: idSet })
-    : checkOtherAccess(access, { auth, permission, ids: idSet });
+    : withGalleryGrants(
+        access,
+        { auth, permission, ids: idSet },
+        await checkOtherAccess(access, { auth, permission, ids: idSet }),
+      );
 };
 
 const checkSharedLinkAccess = async (
@@ -168,11 +173,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       const isOwner = await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
       const isAlbum = await access.asset.checkAlbumAccess(auth.user.id, setDifference(ids, isOwner));
       const isPartner = await access.asset.checkPartnerAccess(auth.user.id, setDifference(ids, isOwner, isAlbum));
-      const isSpace = await access.asset.checkSpaceAccess(
-        auth.user.id,
-        setDifference(ids, isOwner, isAlbum, isPartner),
-      );
-      return setUnion(isOwner, isAlbum, isPartner, isSpace);
+      return setUnion(isOwner, isAlbum, isPartner);
     }
 
     case Permission.AssetShare: {
@@ -189,41 +190,18 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       const isOwner = await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
       const isAlbum = await access.asset.checkAlbumAccess(auth.user.id, setDifference(ids, isOwner));
       const isPartner = await access.asset.checkPartnerAccess(auth.user.id, setDifference(ids, isOwner, isAlbum));
-      const isSpace = await access.asset.checkSpaceAccess(
-        auth.user.id,
-        setDifference(ids, isOwner, isAlbum, isPartner),
-      );
-      return setUnion(isOwner, isAlbum, isPartner, isSpace);
+      return setUnion(isOwner, isAlbum, isPartner);
     }
 
     case Permission.AssetDownload: {
       const isOwner = await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
       const isAlbum = await access.asset.checkAlbumAccess(auth.user.id, setDifference(ids, isOwner));
       const isPartner = await access.asset.checkPartnerAccess(auth.user.id, setDifference(ids, isOwner, isAlbum));
-      const isSpace = await access.asset.checkSpaceAccess(
-        auth.user.id,
-        setDifference(ids, isOwner, isAlbum, isPartner),
-      );
-      return setUnion(isOwner, isAlbum, isPartner, isSpace);
+      return setUnion(isOwner, isAlbum, isPartner);
     }
 
-    case Permission.AssetUpdate:
-    case Permission.AssetEditGet:
-    case Permission.AssetEditCreate:
-    case Permission.AssetEditDelete: {
-      // #734: asset edits (rotate/crop/trim and revert) follow the same rule as AssetUpdate —
-      // owner OR space Owner/Editor over a member's asset. Folded into one case: the two used to
-      // be separate, byte-identical blocks, which is two places the rule could silently drift.
-      //
-      // AssetEditGet is included for consistency, not because a call site needs it today:
-      // AssetService.getAssetEdits gates per-asset on AssetRead (which already admits space
-      // members via checkSpaceAccess), and AssetEditGet currently reaches only the controller's
-      // route-scope decorator, never checkAccess. Leaving it owner-only here would make it
-      // narrower than the read path it names, so a future call site routed through it would
-      // silently disagree with Create and Delete.
-      const isOwner = await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
-      const isSpaceEditor = await access.asset.checkSpaceEditAccess(auth.user.id, setDifference(ids, isOwner));
-      return setUnion(isOwner, isSpaceEditor);
+    case Permission.AssetUpdate: {
+      return await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
     }
 
     case Permission.AssetDelete: {
@@ -231,6 +209,18 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
     }
 
     case Permission.AssetCopy: {
+      return await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
+    }
+
+    case Permission.AssetEditGet: {
+      return await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
+    }
+
+    case Permission.AssetEditCreate: {
+      return await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
+    }
+
+    case Permission.AssetEditDelete: {
       return await access.asset.checkOwnerAccess(auth.user.id, ids, auth.session?.hasElevatedPermission);
     }
 
@@ -246,12 +236,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
         setDifference(ids, isOwner),
         AlbumUserRole.Viewer,
       );
-      const granted = setUnion(isOwner, isShared);
-      const isSpaceLinked = await access.album.checkSpaceLinkedAlbumReadAccess(
-        auth.user.id,
-        setDifference(ids, granted),
-      );
-      return setUnion(granted, isSpaceLinked);
+      return setUnion(isOwner, isShared);
     }
 
     case Permission.AlbumAssetCreate: {
@@ -261,9 +246,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
         setDifference(ids, isOwner),
         AlbumUserRole.Editor,
       );
-      const granted = setUnion(isOwner, isShared);
-      const isSpaceLinked = await access.album.checkSpaceLinkedAlbumAccess(auth.user.id, setDifference(ids, granted));
-      return setUnion(granted, isSpaceLinked);
+      return setUnion(isOwner, isShared);
     }
 
     case Permission.AlbumUpdate: {
@@ -297,12 +280,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
         setDifference(ids, isOwner),
         AlbumUserRole.Viewer,
       );
-      const granted = setUnion(isOwner, isShared);
-      const isSpaceLinked = await access.album.checkSpaceLinkedAlbumReadAccess(
-        auth.user.id,
-        setDifference(ids, granted),
-      );
-      return setUnion(granted, isSpaceLinked);
+      return setUnion(isOwner, isShared);
     }
 
     case Permission.AlbumAssetDelete: {
@@ -312,9 +290,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
         setDifference(ids, isOwner),
         AlbumUserRole.Editor,
       );
-      const granted = setUnion(isOwner, isShared);
-      const isSpaceLinked = await access.album.checkSpaceLinkedAlbumAccess(auth.user.id, setDifference(ids, granted));
-      return setUnion(granted, isSpaceLinked);
+      return setUnion(isOwner, isShared);
     }
 
     case Permission.AssetUpload: {
@@ -381,15 +357,15 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       // Owners always have access; shared-space members may also read a person (e.g. the
       // representative-face picker and thumbnails) when the person's faces appear on assets
       // shared with them. Mutations (update/delete/merge) stay owner-only below.
-      const isOwner = await access.person.checkOwnerAccess(auth.user.id, ids);
-      const isShared = await access.person.checkSharedSpaceAccess(auth.user.id, setDifference(ids, isOwner));
+      const isOwner = await access.galleryPerson.checkOwnerAccess(auth.user.id, ids);
+      const isShared = await access.galleryPerson.checkSharedSpaceAccess(auth.user.id, setDifference(ids, isOwner));
       return setUnion(isOwner, isShared);
     }
 
     case Permission.PersonUpdate:
     case Permission.PersonDelete:
     case Permission.PersonMerge: {
-      return await access.person.checkOwnerAccess(auth.user.id, ids);
+      return await access.galleryPerson.checkOwnerAccess(auth.user.id, ids);
     }
 
     case Permission.PersonReassign: {
@@ -440,10 +416,6 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       return access.stack.checkOwnerAccess(auth.user.id, ids);
     }
 
-    case Permission.SharedSpaceRead: {
-      return await access.sharedSpace.checkMemberAccess(auth.user.id, ids);
-    }
-
     case Permission.WorkflowRead:
     case Permission.WorkflowUpdate:
     case Permission.WorkflowDelete:
@@ -455,30 +427,6 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       return new Set<string>();
     }
   }
-};
-
-/**
- * True when the caller reaches an album through a DIRECT grant — album owner or a shared album_user
- * (Viewer+) — as opposed to ONLY via shared-space membership (checkSpaceLinkedAlbumReadAccess, no role
- * filter). Mirrors the `granted` set computed in the AlbumRead case above, i.e. everything AlbumRead
- * grants BEFORE the space-linked arm is unioned in.
- *
- * When AlbumRead passed but this returns false, the caller is a "space-only reader". Used to deny
- * album-level activity (C1) and strip participant PII (security-8) for those callers, while leaving
- * genuine owners/participants untouched.
- */
-export const hasDirectAlbumReadAccess = async (
-  access: AccessRepository,
-  userId: string,
-  albumId: string,
-): Promise<boolean> => {
-  const ids = new Set([albumId]);
-  const isOwner = await access.album.checkOwnerAccess(userId, ids);
-  if (isOwner.has(albumId)) {
-    return true;
-  }
-  const isShared = await access.album.checkSharedAlbumAccess(userId, ids, AlbumUserRole.Viewer);
-  return isShared.has(albumId);
 };
 
 export const requireElevatedPermission = (auth: AuthDto) => {

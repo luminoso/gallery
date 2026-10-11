@@ -127,7 +127,7 @@ export class AssetService extends BaseService {
         throw new ForbiddenException('Not a member of this space');
       }
 
-      const hasSpaceAccess = await this.accessRepository.asset.checkSpaceAccessForSpace(
+      const hasSpaceAccess = await this.accessRepository.spaceAsset.checkSpaceAccessForSpace(
         auth.user.id,
         spaceId,
         new Set([id]),

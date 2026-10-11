@@ -51,7 +51,8 @@ import { describe, expect, it } from 'vitest';
 // Server root — vitest runs with cwd at server/ (matches face-identity-query-shape.spec.ts).
 const SERVER_ROOT = process.cwd();
 
-const REPO_DIR = 'src/repositories';
+// src/gallery holds the fork repositories (and the fork access classes) moved out of src/repositories.
+const REPO_DIRS = ['src/repositories', 'src/gallery'];
 const EXTRA_FILES = ['src/utils/database.ts'];
 
 // Fork-owned space-scope helpers. A call to any of these IS a space read (they
@@ -69,9 +70,11 @@ const SPACE_READ_MARKER = new RegExp(`${SPACE_HELPER.source}|${SPACE_TABLE.sourc
 // Derive the file set: every repository + utils/database.ts that contains a
 // space-read marker. Glob, do not hardcode — a new leaky file is auto-included.
 const deriveScopingFiles = (): string[] => {
-  const repoFiles = readdirSync(join(SERVER_ROOT, REPO_DIR))
-    .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'))
-    .map((f) => `${REPO_DIR}/${f}`);
+  const repoFiles = REPO_DIRS.flatMap((dir) =>
+    readdirSync(join(SERVER_ROOT, dir))
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'))
+      .map((f) => `${dir}/${f}`),
+  );
   return [...repoFiles, ...EXTRA_FILES].filter((file) =>
     SPACE_READ_MARKER.test(readFileSync(join(SERVER_ROOT, file), 'utf8')),
   );

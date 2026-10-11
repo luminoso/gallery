@@ -219,13 +219,16 @@ describe(AssetService.name, () => {
 
     it('should allow shared space access', async () => {
       const asset = AssetFactory.create();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
 
       await sut.get(authStub.admin, asset.id);
 
-      expect(mocks.access.asset.checkSpaceAccess).toHaveBeenCalledWith(authStub.admin.user.id, new Set([asset.id]));
+      expect(mocks.access.spaceAsset.checkSpaceAccess).toHaveBeenCalledWith(
+        authStub.admin.user.id,
+        new Set([asset.id]),
+      );
     });
 
     it('should keep people for space member with spaceId', async () => {
@@ -233,10 +236,10 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
         new Map([['person-1', { id: 'space-person-1', isHidden: false }]]),
       );
@@ -260,10 +263,10 @@ describe(AssetService.name, () => {
           }),
         )
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
         new Map([
           [
@@ -303,7 +306,7 @@ describe(AssetService.name, () => {
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.user1.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
         new Map([['person-1', { id: 'space-person-1', isHidden: false }]]),
       );
@@ -335,7 +338,7 @@ describe(AssetService.name, () => {
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.user1.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set());
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set());
 
       const result = await sut.get(authStub.user1, asset.id, 'space-id');
 
@@ -350,7 +353,7 @@ describe(AssetService.name, () => {
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.user1.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
         new Map([['person-1', { id: 'space-person-1', isHidden: true }]]),
       );
@@ -368,7 +371,7 @@ describe(AssetService.name, () => {
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.user1.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(new Map());
 
       const result = await sut.get(authStub.user1, asset.id, 'space-id');
@@ -378,10 +381,10 @@ describe(AssetService.name, () => {
 
     it('should not expose unassigned faces for space member with spaceId', async () => {
       const asset = AssetFactory.from().exif().face({ id: 'unassigned-face-id' }).build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(new Map());
 
       const result = await sut.get(authStub.admin, asset.id, 'space-id');
@@ -396,7 +399,7 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
 
@@ -410,7 +413,7 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue(void 0 as any);
 
@@ -422,10 +425,10 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
         new Map([['person-1', { id: 'space-person-1', isHidden: true }]]),
       );
@@ -440,10 +443,10 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(new Map());
 
       const result = await sut.get(authStub.admin, asset.id, 'space-id');
@@ -580,10 +583,10 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set());
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set());
 
       const result = await sut.get(authStub.admin, asset.id, 'space-id');
 
@@ -600,10 +603,10 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.getMember.mockResolvedValue({ userId: authStub.admin.user.id } as any);
-      mocks.access.asset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccessForSpace.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
         new Map([['person-1', { id: 'sp-1', isHidden: false }]]),
       );
@@ -618,7 +621,7 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' });
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
@@ -653,7 +656,7 @@ describe(AssetService.name, () => {
         .exif()
         .face({}, (f) => f.person({ personGroupId: 'person-1', name: 'Test Person' }))
         .build();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(asset as any);
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' });
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(
@@ -734,7 +737,7 @@ describe(AssetService.name, () => {
 
     it('favorites an asset the caller only has space-read (not owner/editor) access to (E3)', async () => {
       const auth = AuthFactory.create();
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set(['asset-1']));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set(['asset-1']));
 
       await sut.updateFavorites(auth, { ids: ['asset-1'], isFavorite: true });
 
@@ -1124,7 +1127,7 @@ describe(AssetService.name, () => {
       // Caller does not own the asset but has space-edit rights → AssetUpdate gate passes.
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.asset.update.mockResolvedValue({ ...getForAsset(asset), visibility: AssetVisibility.Locked });
 
@@ -1144,7 +1147,7 @@ describe(AssetService.name, () => {
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
 
       await expect(sut.update(auth, asset.id, { livePhotoVideoId: motionId })).rejects.toBeInstanceOf(
         ForbiddenException,
@@ -1163,8 +1166,8 @@ describe(AssetService.name, () => {
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.asset.update.mockResolvedValue(getForAsset(asset));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
 
       await sut.update(auth, asset.id, { isFavorite: true });
 
@@ -1211,7 +1214,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       // Editor owns asset-1; has space-edit rights over asset-2 (another member's asset) → AssetUpdate gate passes.
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set(['asset-1']));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
       mocks.asset.getByIds.mockResolvedValue([
         AssetFactory.create({ id: 'asset-1', visibility: AssetVisibility.Timeline }),
         AssetFactory.create({ id: 'asset-2', visibility: AssetVisibility.Timeline }),
@@ -1232,7 +1235,7 @@ describe(AssetService.name, () => {
     it('allows a space editor to change a metadata field on a non-owned asset (existing policy) (rbac-3)', async () => {
       const auth = AuthFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
 
       await sut.updateAll(auth, { ids: ['asset-2'], rating: 3 });
 
@@ -1244,7 +1247,7 @@ describe(AssetService.name, () => {
     it('rejects a bulk duplicateId change that includes a non-owned (space-edit) asset (rbac-3)', async () => {
       const auth = AuthFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set(['asset-1']));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
 
       await expect(sut.updateAll(auth, { ids: ['asset-1', 'asset-2'], duplicateId: null })).rejects.toBeInstanceOf(
         ForbiddenException,
@@ -1258,8 +1261,8 @@ describe(AssetService.name, () => {
     it('lets a space editor favorite a non-owned asset via the alias without logging a cross-owner edit (#763)', async () => {
       const auth = AuthFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set(['asset-2']));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(['asset-2']));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set(['asset-2']));
 
       await sut.updateAll(auth, { ids: ['asset-2'], isFavorite: true });
 
@@ -3385,7 +3388,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.assetEdit.getAll.mockResolvedValue([]);
 
       await expect(sut.getAssetEdits(auth, asset.id)).resolves.toEqual({ assetId: asset.id, edits: [] });
@@ -3395,7 +3398,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create({ type: AssetType.Image });
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getForEdit.mockResolvedValue({
         type: AssetType.Image,
         livePhotoVideoId: null,
@@ -3420,7 +3423,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.assetEdit.getAll.mockResolvedValue([]);
       mocks.assetEdit.replaceAll.mockResolvedValue([]);
@@ -3432,7 +3435,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set());
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set());
 
       await expect(sut.editAsset(auth, asset.id, { edits: [] } as AssetEditsCreateDto)).rejects.toBeInstanceOf(
         BadRequestException,
@@ -3443,7 +3446,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.upsertMetadata.mockResolvedValue([]);
 
       await expect(sut.upsertMetadata(auth, asset.id, { items: [] })).resolves.not.toThrow();
@@ -3459,8 +3462,8 @@ describe(AssetService.name, () => {
       // lets a space editor read the asset at all before the AssetUpdate check below decides canEdit.
       // The brief's original mock omitted this and the test 400ed on the read gate before ever reaching
       // canEdit; see also S-15's comment on the same checkSpaceAccess-vs-checkSpaceEditAccess split.
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
 
@@ -3475,8 +3478,8 @@ describe(AssetService.name, () => {
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
       // Read access via space membership (see S-29's comment), but no edit access — the caller can see
       // the asset but canEdit must resolve false.
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set());
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set());
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(void 0 as any);
 
@@ -3521,7 +3524,7 @@ describe(AssetService.name, () => {
       const editable = newUuid();
       const forbidden = newUuid();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([mine]));
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([editable]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([editable]));
 
       const result = await sut.getEditable(auth, { assetIds: [mine, editable, forbidden] });
 
@@ -3531,7 +3534,7 @@ describe(AssetService.name, () => {
     it('S-34: handles an empty request without error', async () => {
       const auth = AuthFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set());
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set());
 
       await expect(sut.getEditable(auth, { assetIds: [] })).resolves.toEqual({ editableAssetIds: [] });
     });
@@ -3539,7 +3542,7 @@ describe(AssetService.name, () => {
     it('S-35: silently excludes an unknown id rather than 404ing', async () => {
       const auth = AuthFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set());
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set());
 
       await expect(sut.getEditable(auth, { assetIds: [newUuid()] })).resolves.toEqual({ editableAssetIds: [] });
     });
@@ -3550,7 +3553,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.asset.update.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' } as any);
@@ -3559,7 +3562,7 @@ describe(AssetService.name, () => {
       // editor genuinely holds that read through `checkSpaceAccess`, so grant it here — without it
       // the fixture denies the actor a read they really have and the test never reaches its
       // assertion.
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(new Map());
 
       await sut.update(auth, asset.id, { description: 'fixed' });
@@ -3591,11 +3594,11 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.asset.update.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue(null as any);
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
 
       await expect(sut.update(auth, asset.id, { description: 'x' })).resolves.toBeDefined();
       expect(mocks.sharedSpace.logActivity).not.toHaveBeenCalled();
@@ -3605,12 +3608,12 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.asset.update.mockResolvedValue(getForAsset(asset));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' } as any);
       mocks.sharedSpace.logActivity.mockRejectedValue(new Error('activity insert failed'));
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.sharedSpace.findSpacePersonsByLinkedPersonIds.mockResolvedValue(new Map());
 
       await expect(sut.update(auth, asset.id, { description: 'x' })).resolves.toBeDefined();
@@ -3624,7 +3627,7 @@ describe(AssetService.name, () => {
       const nowhere = newUuid();
       const ids = [inA1, inA2, inB, nowhere];
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(ids));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(ids));
       // No getByIds mock: logCrossOwnerEdit derives cross-owner from the pure owner arm
       // (checkOwnerAccess above returning empty) rather than fetching asset rows.
       mocks.sharedSpace.findSpaceForAssetAndUser.mockImplementation((assetId: string) =>
@@ -3656,7 +3659,7 @@ describe(AssetService.name, () => {
       const CAP = 500;
       const ids = Array.from({ length: CAP + 1 }, () => newUuid());
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(ids));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(ids));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' } as any);
       mocks.sharedSpace.logActivity.mockResolvedValue(void 0);
 
@@ -3673,7 +3676,7 @@ describe(AssetService.name, () => {
       const auth = AuthFactory.create();
       const ids = Array.from({ length: 10 }, () => newUuid());
       mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set());
-      mocks.access.asset.checkSpaceEditAccess.mockResolvedValue(new Set(ids));
+      mocks.access.spaceAsset.checkSpaceEditAccess.mockResolvedValue(new Set(ids));
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' } as any);
       mocks.sharedSpace.logActivity.mockResolvedValue(void 0);
 
@@ -3702,7 +3705,7 @@ describe(AssetService.name, () => {
       // v3.2.0: the response is now `this.get(auth, id)`, which re-checks AssetRead AFTER the write.
       // Granted through the space arm on purpose: it leaves the checkOwnerAccess sequence above
       // untouched, so a mutant that runs logCrossOwnerEdit still consumes the not-owned third value.
-      mocks.access.asset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.access.spaceAsset.checkSpaceAccess.mockResolvedValue(new Set([asset.id]));
       mocks.asset.getById.mockResolvedValue(getForAsset(asset));
       mocks.asset.update.mockResolvedValue({ ...getForAsset(asset), visibility: AssetVisibility.Locked });
       mocks.sharedSpace.findSpaceForAssetAndUser.mockResolvedValue({ spaceId: 'space-1' } as any);

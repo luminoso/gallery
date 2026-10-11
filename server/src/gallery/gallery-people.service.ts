@@ -106,7 +106,7 @@ export class GalleryPeopleService extends BaseService {
     // callers to space-reachable, shareable-visibility faces only — never the owner's Hidden/
     // never-shared faces or faces pulled in via another user's identity. The owner keeps the full,
     // unscoped list.
-    const isOwner = await this.accessRepository.person.checkOwnerAccess(auth.user.id, new Set([id]));
+    const isOwner = await this.accessRepository.galleryPerson.checkOwnerAccess(auth.user.id, new Set([id]));
     const scope = isOwner.has(id) ? undefined : { memberUserId: auth.user.id };
     const rows = await this.personRepository.getRepresentativeFaces({
       personId: id,
@@ -166,9 +166,9 @@ export class GalleryPeopleService extends BaseService {
     // owner's GLOBAL representative face must be limited to the owner or an Editor/Owner of a space
     // the person is shared through — mirror album writes. A viewer is denied.
     const ids = new Set([id]);
-    const isOwner = await this.accessRepository.person.checkOwnerAccess(auth.user.id, ids);
+    const isOwner = await this.accessRepository.galleryPerson.checkOwnerAccess(auth.user.id, ids);
     if (!isOwner.has(id)) {
-      const canEdit = await this.accessRepository.person.checkSharedSpaceEditAccess(auth.user.id, ids);
+      const canEdit = await this.accessRepository.galleryPerson.checkSharedSpaceEditAccess(auth.user.id, ids);
       if (!canEdit.has(id)) {
         throw new ForbiddenException('Not authorized to change this person');
       }
