@@ -2,9 +2,9 @@ import type { SharedSpaceMemberResponseDto, SharedSpaceResponseDto } from '@immi
 import type { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
 import type { SearchTerms } from '$lib/services/search.service';
 import { filterStateToSearchTerms } from '$lib/utils/filter-search-terms';
+import { buildMapFilterConfig } from '$lib/utils/map-filter-config';
 import { buildSpaceTimelineOptions, handleSpaceRemoveFilter } from '$lib/utils/space-filter-options';
 import { FilteredTimelineController } from './filtered-timeline-controller.svelte';
-import { scopedBrowseConfig } from './scoped-suggestions';
 
 type SpaceTimelineOptions = {
   getSpace: () => SharedSpaceResponseDto;
@@ -23,7 +23,6 @@ export const createSpaceTimeline = ({
   onQueryChange,
 }: SpaceTimelineOptions) => {
   const scope = () => ({ spaceId: getSpace().id });
-  const browseConfig = scopedBrowseConfig(scope);
   return new FilteredTimelineController({
     name: 'spaces',
     storageKey: 'gallery-filter-visible-sections',
@@ -32,7 +31,8 @@ export const createSpaceTimeline = ({
     canZoom,
     scope,
     timelineOptions: (filters) => buildSpaceTimelineOptions(getSpace().id, filters),
-    browseConfig: () => browseConfig,
+    // Same scoped suggestions as the map inside a space; people keyed by their space id.
+    browseConfig: () => buildMapFilterConfig(getSpace().id),
     removeFilter: handleSpaceRemoveFilter,
     // An owner chip inside a space is always a member, already in scope: no lookup needed.
     ownerNameSeed: () => getMembers().map(({ userId, name }) => ({ id: userId, name })),

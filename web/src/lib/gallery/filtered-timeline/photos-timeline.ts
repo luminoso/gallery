@@ -2,12 +2,13 @@ import { AssetVisibility } from '@immich/sdk';
 import { authManager } from '$lib/managers/auth-manager.svelte';
 import type { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
 import { filterStateToSearchTerms } from '$lib/utils/filter-search-terms';
+import { buildMapFilterConfig } from '$lib/utils/map-filter-config';
 import { buildPhotosTimelineOptions } from '$lib/utils/photos-filter-options';
 import { FilteredTimelineController } from './filtered-timeline-controller.svelte';
-import { scopedBrowseConfig, type SuggestionScope } from './scoped-suggestions';
 
-const scope: SuggestionScope = { withSharedSpaces: true };
-const browseConfig = scopedBrowseConfig(() => scope);
+const scope = { withSharedSpaces: true };
+// The map's panel config is the same suggestion scope: every section, own + partners + shown spaces.
+const browseConfig = buildMapFilterConfig();
 
 /** `/photos`: my timeline plus partners and the spaces I show on it. */
 export const createPhotosTimeline = (getTimelineManager: () => TimelineManager | undefined) =>
