@@ -135,6 +135,16 @@ patch_i18n() {
   local en_target="$i18n_dir/en.json"
   local tmp
 
+  # 0. Fold the Gallery overlay (i18n/gallery/, see merge.mjs there) into the upstream locale files,
+  #    so the steps below and verify-branding.sh brand the bundle that actually ships. The overlay is
+  #    then removed: a later merge (web build, mobile codegen) would otherwise re-apply its unbranded
+  #    values over the branded ones.
+  if [[ -f "$i18n_dir/gallery/merge.mjs" ]]; then
+    node "$i18n_dir/gallery/merge.mjs" --out "$i18n_dir"
+    rm -f "$i18n_dir"/gallery/*.json "$i18n_dir/gallery/overrides.txt"
+    echo "  Folded the Gallery i18n overlay into the upstream locale files"
+  fi
+
   # 1. Merge English overrides into en.json — the canonical branded fallback
   #    every other locale resolves to for any key it doesn't define.
   if [[ -f "$en_overrides" && -f "$en_target" ]]; then

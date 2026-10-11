@@ -219,17 +219,23 @@ form GitHub honours; it reaches `main` at the next upstream cutover.
 
 ## i18n
 
-`i18n/` at the repo root is shared by web and mobile — grep both before deleting or renaming a key.
+`i18n/` at the repo root is shared by web and mobile. Grep both before deleting or renaming a key.
 
-**Every change that adds or edits a user-facing string must update these nine locales in the same commit, not just `en.json`:**
+**`i18n/*.json` are upstream's files and stay byte-identical to the upstream tag** (`git diff refs/upstream/vX.Y.Z -- i18n/*.json` is empty). Never edit them: every fork string lives in the overlay `i18n/gallery/<locale>.json`. `i18n/gallery/merge.mjs` merges the two into the gitignored `i18n/gallery/merged/`, which is what everything reads: web's `$i18n` alias (built whenever `web/svelte.config.js` loads, rebuilt on change in `vite dev`), mobile codegen (`mise //mobile:codegen`, task `i18n:merge`), and the key-checking specs in web, server and mobile. `apply-branding.sh` folds the overlay into `i18n/*.json` before branding. Design and the Weblate setup: `specs/2026-10-11-i18n-overlay-design.md`.
+
+- **New fork string:** add the key to `i18n/gallery/en.json` and the nine locales below.
+- **Rewording an upstream string:** put the new text in the overlay (en plus the nine) and list the key in `i18n/gallery/overrides.txt`. On any unlisted collision upstream wins. Add `exclusive` when the meaning changed, so locales the overlay does not translate drop upstream's stale translation and fall back to English.
+- `node i18n/gallery/merge.mjs --check` (CI's "Test i18n" job) fails on overlay entries upstream now defines and on `overrides.txt` lines for keys upstream removed. Resolve each at rebase time: delete the overlay entry, or list the key.
+
+**Every change that adds or edits a user-facing string must update these nine overlay locales in the same commit, not just `i18n/gallery/en.json`:**
 
 `de` · `fr` · `it` · `nl` · `pl` · `es` · `ru` · `zh_Hans` · `zh_Hant`
 
 - **Editing an existing key counts.** When the English wording changes meaning, every translation of it is now wrong and must be rewritten. A stale translation is worse than a missing one: a missing key falls back to English, while a stale one confidently describes a UI that no longer exists — `filter_show_sections_hint` told nine locales to "click an icon above" after the icons had been deleted.
 - **Match each file's existing register and terminology.** The German, Italian and Spanish files address the user informally (`du` / `tu` / `tú`); French and Russian use the formal `vous` / `вы`. Reuse the word the file already uses for a concept — look up the nearest existing key instead of inventing a synonym.
 - **Mind gender agreement** when the subject is a noun the file already translates: `la barre latérale` and `боковая панель` are feminine, `panel boczny` masculine, so "Always compact" inflects differently in each.
-- Keys are **alphabetically sorted**, 2-space indent, unescaped Unicode. Insert in place rather than appending, then run `npx prettier --write i18n/*.json` — CI checks the formatting.
-- The remaining ~80 locale files are left to translators; do not hand-edit them.
+- Keys are **alphabetically sorted**, 2-space indent, unescaped Unicode. Insert in place rather than appending, then run `npx prettier --write i18n/`, which covers the overlay. CI checks the formatting.
+- The other overlay locales are left to translators (the Gallery Weblate component); do not hand-edit them.
 
 ## OpenAPI Workflow
 

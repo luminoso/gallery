@@ -1,0 +1,52 @@
+# Upstream keys the Gallery overlay deliberately rewords. On any other collision upstream wins.
+#
+#   <key>            the overlay value wins in each locale that has one; upstream's stays elsewhere
+#   <key> exclusive  same, and upstream's translation is dropped in every other locale (it describes
+#                    the old wording), so those locales fall back to English
+#
+# node i18n/gallery/merge.mjs --check fails on stale lines. See specs/2026-10-11-i18n-overlay-design.md.
+
+admin.download_csv
+admin.integrity_checks_untracked_files_description
+admin.library_watching_settings
+admin.machine_learning_max_recognition_distance_description
+admin.maintenance_integrity_checksum_mismatch_refresh_job
+admin.maintenance_integrity_missing_file_refresh_job
+admin.maintenance_integrity_untracked_file_refresh_job
+admin.oauth_client_secret_description
+admin.oauth_end_session_url_description
+admin.queues
+admin.queues_page_description
+admin.release_channel_stable
+admin.server_public_users_description
+admin.template_email_invite_album
+admin.template_email_update_album
+admin.transcoding_max_bitrate_description
+admin.transcoding_realtime
+admin.transcoding_realtime_resolutions_description
+admin.transcoding_realtime_video_codecs_description
+background_location_permission_content exclusive
+errors.error_adding_assets_to_album
+errors.error_adding_users_to_album
+errors.error_removing_assets_from_album
+errors.failed_to_create_album
+errors.unable_to_add_album_users
+errors.unable_to_change_album_user_role
+errors.unable_to_delete_album
+errors.unable_to_remove_album_users
+errors.unable_to_save_album
+errors.unable_to_update_album_cover
+errors.unable_to_update_album_info
+load_more
+location_permission_content exclusive
+login_form_server_empty
+login_form_server_error
+login_has_been_disabled
+map_location_service_disabled_content exclusive
+map_marker_with_image
+map_no_location_permission_content exclusive
+memories_current
+memories_show_upcoming
+memories_upcoming
+reset_sqlite_error_hint
+version_announcement_closing

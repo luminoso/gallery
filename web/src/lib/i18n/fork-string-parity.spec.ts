@@ -13,7 +13,7 @@ import { FORK_LOCALES } from '$lib/i18n/fork-locales';
 // locale still HAS, and prettier cannot see a missing translation. This is the guard for a fork string
 // disappearing from a locale that previously had it.
 
-const I18N_DIR = path.resolve(process.cwd(), '../i18n');
+const I18N_DIR = path.resolve(process.cwd(), '../i18n/gallery/merged');
 
 type Messages = Record<string, string>;
 

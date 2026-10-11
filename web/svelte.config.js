@@ -1,8 +1,12 @@
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import dotenv from 'dotenv';
+import { writeMergedI18n } from '../i18n/gallery/merge.mjs';
 
 dotenv.config({ quiet: true });
+
+// $i18n is upstream i18n/ plus the Gallery overlay; every tool that loads this config (vite, vitest, svelte-check, sync) builds it.
+writeMergedI18n();
 
 process.env.PUBLIC_IMMICH_BUY_HOST = process.env.PUBLIC_IMMICH_BUY_HOST || 'https://buy.immich.app';
 process.env.PUBLIC_IMMICH_PAY_HOST = process.env.PUBLIC_IMMICH_PAY_HOST || 'https://pay.futo.org';
@@ -38,7 +42,7 @@ const config = {
       $tests: 'src/../tests',
       '$tests/*': 'src/../tests/*',
       '@test-data': 'src/test-data',
-      $i18n: '../i18n',
+      $i18n: '../i18n/gallery/merged',
       'chromecast-caf-sender': './node_modules/@types/chromecast-caf-sender/index.d.ts',
     },
   },

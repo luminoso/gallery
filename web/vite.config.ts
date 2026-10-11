@@ -5,6 +5,7 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, type ProxyOptions, type UserConfig } from 'vite';
 import path from 'node:path';
+import { galleryI18nVitePlugin } from '../i18n/gallery/merge.mjs';
 
 const upstream = {
   target: process.env.IMMICH_SERVER_URL || 'http://immich-server:2283/',
@@ -44,6 +45,7 @@ export default defineConfig({
     enhancedImages(),
     tailwindcss(),
     sveltekit(),
+    galleryI18nVitePlugin(),
     process.env.BUILD_STATS === 'true'
       ? visualizer({
           emitFile: true,
