@@ -3,6 +3,7 @@ import { type Kysely, type SelectQueryBuilder, type SqlBool, sql } from 'kysely'
 import { InjectKysely } from 'nestjs-kysely';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
 import { AssetType, AssetVisibility } from 'src/enum.js';
+import { personIdentityId } from 'src/gallery/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { withAssetFilter } from 'src/utils/asset-filter.js';
 import { anyUuid, asUuid, hasPeople } from 'src/utils/database.js';
@@ -138,15 +139,15 @@ export async function getFilteredIdentityPeople(
         'user-person'::text AS "profileType",
         person."personGroupId" AS "profileId",
         NULL::uuid AS "spaceId",
-        person."identityId",
+        ${personIdentityId()} AS "identityId",
         person.name,
         person."isHidden",
         person."updatedAt",
         0 AS "profileRank"
       FROM person
       WHERE person."ownerId" = ${userId}
-        AND person."identityId" IS NOT NULL
-        AND EXISTS (SELECT 1 FROM identity_faces WHERE identity_faces."identityId" = person."identityId")
+        AND ${personIdentityId()} IS NOT NULL
+        AND EXISTS (SELECT 1 FROM identity_faces WHERE identity_faces."identityId" = ${personIdentityId()})
       UNION ALL
       SELECT
         'space-person'::text AS "profileType",

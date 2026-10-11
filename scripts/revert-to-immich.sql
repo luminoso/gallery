@@ -343,6 +343,7 @@ DROP TABLE IF EXISTS "shared_space_member" CASCADE;
 DROP TABLE IF EXISTS "shared_space" CASCADE;
 
 -- Face identities
+DROP TABLE IF EXISTS "person_identity" CASCADE;
 DROP TABLE IF EXISTS "face_repair_scan_flagged_face" CASCADE;
 DROP TABLE IF EXISTS "face_repair_decline" CASCADE;
 DROP TABLE IF EXISTS "face_repair_lock" CASCADE;
@@ -427,6 +428,7 @@ ALTER TABLE "library"           DROP COLUMN IF EXISTS "createId";
 -- section 2 already dropped CASCADE) it has to come off explicitly.
 DROP INDEX IF EXISTS "person_personGroupId_key";
 DROP INDEX IF EXISTS "asset_face_personId_idx";
+-- Databases from before person_identity replaced person."identityId".
 DROP INDEX IF EXISTS "person_ownerId_identityId_key";
 DROP INDEX IF EXISTS "person_identityId_idx";
 ALTER TABLE "person"            DROP COLUMN IF EXISTS "identityId";
@@ -753,6 +755,7 @@ DELETE FROM "kysely_migrations"
   '1798100000000-AddAssetFaceCreatorTable',
   '1798200000000-DropLibraryCreateId',
   '1798500000000-AddAssetJobStatusGalleryTable',
+  '1798600000000-AddPersonIdentityTable',
   -- Pre-rename name, recorded by builds from before the ledger split: this migration was
   -- renumbered off 1793000000000 when fork PR #1060 took that timestamp, but rolling RC instances
   -- had already recorded the pre-rename name. Drop that row too, or upstream's migrator aborts
@@ -862,6 +865,7 @@ BEGIN
        'pet_search',
        'asset_favorite_audit', 'asset_favorite',
        'asset_job_status_gallery',
+       'person_identity',
        'gallery_migrations', 'gallery_migrations_lock'
      );
   IF fork_tables_left > 0 THEN

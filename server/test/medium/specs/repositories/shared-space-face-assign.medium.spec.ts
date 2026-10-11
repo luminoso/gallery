@@ -21,6 +21,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AuthDto } from 'src/dtos/auth.dto.js';
 import { AssetEditAction } from 'src/dtos/editing.dto.js';
 import { AssetVisibility, SourceType } from 'src/enum.js';
+import { personSidecarColumns } from 'src/gallery/person-sidecar.js';
 import { AssetEditRepository } from 'src/repositories/asset-edit.repository.js';
 import { AssetRepository } from 'src/repositories/asset.repository.js';
 import { DatabaseRepository } from 'src/repositories/database.repository.js';
@@ -307,6 +308,7 @@ describe('the owner-named override re-points the face for everyone (F-36 revised
     const landedOn = await defaultDatabase
       .selectFrom('person')
       .selectAll()
+      .select(personSidecarColumns())
       .where('personGroupId', '=', face.personGroupId!)
       .executeTakeFirstOrThrow();
     expect(landedOn.ownerId).toBe(bob.id);
@@ -318,6 +320,7 @@ describe('the owner-named override re-points the face for everyone (F-36 revised
     const person = await defaultDatabase
       .selectFrom('person')
       .selectAll()
+      .select(personSidecarColumns())
       .where('personGroupId', '=', bobPerson.personGroupId)
       .executeTakeFirstOrThrow();
     expect(person.name).toBe('Dad');
@@ -476,7 +479,12 @@ describe('an identity-less space person named like the owner person reuses it (Â
       .where('id', '=', faceId)
       .executeTakeFirstOrThrow();
     expect(face.personGroupId).toBe(bobPerson.personGroupId);
-    const bobPeople = await defaultDatabase.selectFrom('person').selectAll().where('ownerId', '=', bob.id).execute();
+    const bobPeople = await defaultDatabase
+      .selectFrom('person')
+      .selectAll()
+      .select(personSidecarColumns())
+      .where('ownerId', '=', bob.id)
+      .execute();
     expect(bobPeople).toHaveLength(1);
     const updated = await defaultDatabase
       .selectFrom('shared_space_person')
@@ -1126,7 +1134,12 @@ describe('attach propagates to the owner, but only for the attached identity (F-
       .executeTakeFirstOrThrow();
     expect(faceBefore.personGroupId).toBeNull();
     await expect(
-      defaultDatabase.selectFrom('person').selectAll().where('ownerId', '=', bob.id).execute(),
+      defaultDatabase
+        .selectFrom('person')
+        .selectAll()
+        .select(personSidecarColumns())
+        .where('ownerId', '=', bob.id)
+        .execute(),
     ).resolves.toEqual([]);
 
     await expect(sut.attachFaceToSpacePerson(auth, space.id, person.id, faceId)).resolves.toBe(true);
@@ -1140,7 +1153,12 @@ describe('attach propagates to the owner, but only for the attached identity (F-
 
     // Bob had never named this human, so the propagation had to CREATE the person, carrying Anna's
     // name across -- and the face must point at exactly that new row, not merely at "some" person.
-    const bobPeople = await defaultDatabase.selectFrom('person').selectAll().where('ownerId', '=', bob.id).execute();
+    const bobPeople = await defaultDatabase
+      .selectFrom('person')
+      .selectAll()
+      .select(personSidecarColumns())
+      .where('ownerId', '=', bob.id)
+      .execute();
     expect(bobPeople).toHaveLength(1);
     expect(bobPeople[0].name).toBe('Aurelia');
     expect(faceAfter.personGroupId).toBe(bobPeople[0].personGroupId);
@@ -1280,6 +1298,7 @@ describe('createSpaceAssetFace', () => {
     const ownerPerson = await defaultDatabase
       .selectFrom('person')
       .selectAll()
+      .select(personSidecarColumns())
       .where('personGroupId', '=', face.personGroupId!)
       .executeTakeFirstOrThrow();
     expect(ownerPerson.ownerId).toBe(bob.id);

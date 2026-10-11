@@ -214,7 +214,15 @@ select
           "asset_face"
           left join lateral (
             select
-              "person".*
+              "person".*,
+              (
+                SELECT
+                  "person_identity"."identityId"
+                FROM
+                  "person_identity"
+                WHERE
+                  "person_identity"."personGroupId" = "person"."personGroupId"
+              ) as "identityId"
             from
               "person"
             where
@@ -283,7 +291,15 @@ select
           "asset_face"
           left join lateral (
             select
-              "person".*
+              "person".*,
+              (
+                SELECT
+                  "person_identity"."identityId"
+                FROM
+                  "person_identity"
+                WHERE
+                  "person_identity"."personGroupId" = "person"."personGroupId"
+              ) as "identityId"
             from
               "person"
             where

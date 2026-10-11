@@ -6,7 +6,7 @@ import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { PersonRepository } from 'src/repositories/person.repository.js';
 import { DB } from 'src/schema/index.js';
 import { BaseService } from 'src/services/base.service.js';
-import { newMediumService } from 'test/medium.factory.js';
+import { newMediumService, updatePersonForTest } from 'test/medium.factory.js';
 import { newEmbedding } from 'test/small.factory.js';
 import { getKyselyDB } from 'test/utils.js';
 
@@ -1324,11 +1324,7 @@ describe(PersonRepository.name, () => {
       // A DIFFERENT user's own person shares the same identity (e.g. a merged identity), with a face on
       // that other user's own asset -- never shared into any space the viewer belongs to.
       const { person: otherPerson } = await ctx.newPerson({ ownerId: otherUser.id });
-      await ctx.database
-        .updateTable('person')
-        .set({ identityId: identity.id })
-        .where('personGroupId', '=', otherPerson.personGroupId)
-        .execute();
+      await updatePersonForTest(ctx.database, otherPerson.personGroupId, { identityId: identity.id });
       const { asset: otherAsset } = await ctx.newAsset({ ownerId: otherUser.id, visibility: AssetVisibility.Timeline });
       const { assetFace: otherFace } = await ctx.newAssetFace({
         assetId: otherAsset.id,

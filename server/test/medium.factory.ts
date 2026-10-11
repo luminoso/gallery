@@ -1,4 +1,4 @@
-import { Insertable, Kysely } from 'kysely';
+import { Insertable, Kysely, Updateable } from 'kysely';
 import { DateTime } from 'luxon';
 import { createHash, randomBytes } from 'node:crypto';
 import { Stats } from 'node:fs';
@@ -25,6 +25,7 @@ import {
 import { FaceSearchRepository } from 'src/gallery/face-search.repository.js';
 import { FilterSuggestionRepository } from 'src/gallery/filter-suggestion.repository.js';
 import { MemoryRuleAssetRepository } from 'src/gallery/memory-rule-asset.repository.js';
+import { PersonSidecarFields, writePersonSidecars } from 'src/gallery/person-sidecar.js';
 import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
 import { QueueMaintenanceRepository } from 'src/gallery/queue-maintenance.repository.js';
 import { SmartFacetRepository } from 'src/gallery/smart-facet.repository.js';
@@ -332,7 +333,7 @@ export class MediumTestContext<S extends ClassConstructor<typeof BaseService> = 
     return { jobStatus, result };
   }
 
-  async newPerson(dto: Partial<Insertable<PersonTable>> & { ownerId: string }) {
+  async newPerson(dto: Partial<Insertable<PersonTable>> & PersonSidecarFields & { ownerId: string }) {
     const repository = this.get(PersonRepository);
     let personGroupId = dto.personGroupId;
     if (!personGroupId) {
@@ -965,6 +966,18 @@ const assetJobStatusInsert = (
  * Option M: `user.clusterGroupId` is a NOT NULL foreign key. `ctx.newUser` mints the group through
  * ClusterGroupRepository; specs that build a user row by hand need the same.
  */
+/** Updates a person row together with its fork sidecar fields (identityId lives in person_identity). */
+export const updatePersonForTest = async (
+  db: Kysely<DB>,
+  personGroupId: string,
+  { identityId, ...person }: Updateable<PersonTable> & PersonSidecarFields,
+) => {
+  if (Object.values(person).some((value) => value !== undefined)) {
+    await db.updateTable('person').set(person).where('personGroupId', '=', personGroupId).execute();
+  }
+  await writePersonSidecars(db, personGroupId, { identityId });
+};
+
 export const insertClusterGroup = async (db: Kysely<DB>): Promise<string> => {
   const { id } = await db.insertInto('cluster_group').defaultValues().returning('id').executeTakeFirstOrThrow();
   return id;
@@ -980,7 +993,9 @@ export const insertPersonGroup = async (db: Kysely<DB>, ownerId: string): Promis
   return id;
 };
 
-const personInsert = (person: Partial<Insertable<PersonTable>> & { ownerId: string; personGroupId: string }) => {
+const personInsert = (
+  person: Partial<Insertable<PersonTable>> & PersonSidecarFields & { ownerId: string; personGroupId: string },
+) => {
   const defaults = {
     birthDate: person.birthDate || null,
     color: person.color || null,

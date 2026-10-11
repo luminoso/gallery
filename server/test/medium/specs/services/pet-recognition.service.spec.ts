@@ -2,6 +2,7 @@ import { Kysely } from 'kysely';
 import { SystemConfig } from 'src/dtos/config.dto.js';
 import { AssetFileType, AssetVisibility, JobName, JobStatus, SharedSpaceRole, SystemMetadataKey } from 'src/enum.js';
 import { FaceSearchRepository } from 'src/gallery/face-search.repository.js';
+import { personIdentityId, personSidecarColumns } from 'src/gallery/person-sidecar.js';
 import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
 import { AssetJobRepository } from 'src/repositories/asset-job.repository.js';
 import { AssetRepository } from 'src/repositories/asset.repository.js';
@@ -141,6 +142,7 @@ describe('PetRecognitionService.handlePetRecognition (medium)', () => {
     const person = await ctx.database
       .selectFrom('person')
       .selectAll()
+      .select(personSidecarColumns())
       .where('personGroupId', '=', rows[0].personGroupId!)
       .executeTakeFirstOrThrow();
     expect(person.type).toBe('pet');
@@ -334,6 +336,7 @@ describe('PetFaceRepository.deleteAllPets (medium)', () => {
     const personRow = await ctx.database
       .selectFrom('person')
       .selectAll()
+      .select(personSidecarColumns())
       .where('personGroupId', '=', humanPerson.personGroupId)
       .executeTakeFirstOrThrow();
     expect(personRow.type).toBe('person');
@@ -482,6 +485,7 @@ describe('PetRecognitionService.handleQueuePetRecognition (medium)', () => {
       const humanPersonRow = await ctx.database
         .selectFrom('person')
         .selectAll()
+        .select(personSidecarColumns())
         .where('personGroupId', '=', humanPerson.personGroupId)
         .executeTakeFirstOrThrow();
       expect(humanPersonRow.type).toBe('person');
@@ -682,6 +686,7 @@ describe('PetRecognitionService model switch (medium)', () => {
       const birdPersonRow = await ctx.database
         .selectFrom('person')
         .selectAll()
+        .select(personSidecarColumns())
         .where('personGroupId', '=', birdBucket.personGroupId)
         .executeTakeFirstOrThrow();
       expect(birdPersonRow.species).toBe('bird');
@@ -726,7 +731,7 @@ describe('PetRecognitionService model switch — shared-space copies (medium)', 
     const individual = await ctx.database
       .selectFrom('person')
       .innerJoin('asset_face', 'asset_face.personGroupId', 'person.personGroupId')
-      .select(['person.personGroupId', 'person.identityId'])
+      .select(['person.personGroupId', personIdentityId().as('identityId')])
       .where('asset_face.id', '=', face.id)
       .executeTakeFirstOrThrow();
     expect(individual.identityId).not.toBeNull();
@@ -948,6 +953,7 @@ describe('pet detection -> recognition pipeline (medium)', () => {
     const person = await ctx.database
       .selectFrom('person')
       .selectAll()
+      .select(personSidecarColumns())
       .where('personGroupId', '=', faceRow.personGroupId!)
       .executeTakeFirstOrThrow();
     expect(person.type).toBe('pet');

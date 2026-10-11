@@ -14,6 +14,13 @@ import { AssetFace } from 'src/database.js';
 import { Chunked, ChunkedArray, DummyValue, GenerateSql } from 'src/decorators.js';
 import { PersonUserRole } from 'src/dtos/person.dto.js';
 import { AssetFileType, AssetVisibility, SourceType, UserMetadataKey } from 'src/enum.js';
+import {
+  PersonSidecarFields,
+  clearOrphanPersonIdentity,
+  personIdentityId,
+  personSidecarColumns,
+  setPersonIdentity,
+} from 'src/gallery/person-sidecar.js';
 import { type YearMonthDay } from 'src/repositories/asset.repository.js';
 import { DB } from 'src/schema/index.js';
 import { AssetFaceTable } from 'src/schema/tables/asset-face.table.js';
@@ -210,6 +217,7 @@ const withPerson = ({ viewingUserId }: WithPersonOptions) => {
       eb
         .selectFrom('person')
         .selectAll('person')
+        .select(personSidecarColumns())
         .whereRef('person.personGroupId', '=', 'asset_face.personGroupId')
         .orderBy(sql`case when "person"."ownerId" = ${viewingUserId} then 0 else 1 end`)
         .limit(1),
@@ -226,7 +234,11 @@ const withPerson = ({ viewingUserId }: WithPersonOptions) => {
  */
 const withPersonAnyOwner = (eb: ExpressionBuilder<DB, 'asset_face'>) =>
   jsonObjectFrom(
-    eb.selectFrom('person').selectAll('person').whereRef('person.personGroupId', '=', 'asset_face.personGroupId'),
+    eb
+      .selectFrom('person')
+      .selectAll('person')
+      .select(personSidecarColumns())
+      .whereRef('person.personGroupId', '=', 'asset_face.personGroupId'),
   ).as('person');
 
 const withFaceSearch = (eb: ExpressionBuilder<DB, 'asset_face'>) => {
@@ -276,7 +288,9 @@ export class PersonRepository {
       throw new Error('Person profile not found');
     }
 
-    const update: Updateable<PersonTable> = { identityId: input.targetIdentityId };
+    await setPersonIdentity(db, input.targetPersonId, input.targetIdentityId);
+    // Always touches the survivor (bumping updatedAt/updateId), as when identityId lived on person.
+    const update: Updateable<PersonTable> = { name: target.name };
     if (isBlank(target.name) && !isBlank(source.name)) {
       update.name = source.name;
     }
@@ -384,11 +398,7 @@ export class PersonRepository {
     },
     db: Kysely<DB> | Transaction<DB> = this.db,
   ): Promise<void> {
-    await db
-      .updateTable('person')
-      .set({ identityId: input.identityId })
-      .where('personGroupId', '=', input.personId)
-      .execute();
+    await setPersonIdentity(db, input.personId, input.identityId);
   }
 
   /**
@@ -404,7 +414,7 @@ export class PersonRepository {
    * first (`createGroup`) — the same rule `createWithGroup` enforces for every other person-insert
    * path. A person is addressed by `personGroupId`; there is no standalone `person.id` any more.
    *
-   * The insert races `person_ownerId_identityId_key` (partial unique, `identityId IS NOT NULL`): two
+   * The insert races `person_identity_ownerId_identityId_key`: two
    * editors attaching two faces of the same not-yet-named human concurrently would both miss the
    * initial select. `doNothing` plus a re-select makes the loser adopt the winner's row rather than
    * fail on the duplicate key. The loser's freshly minted `person_group` row is then unreferenced,
@@ -417,9 +427,10 @@ export class PersonRepository {
     const find = () =>
       db
         .selectFrom('person')
-        .select('personGroupId')
-        .where('ownerId', '=', input.ownerId)
-        .where('identityId', '=', input.identityId)
+        .innerJoin('person_identity', 'person_identity.personGroupId', 'person.personGroupId')
+        .select('person.personGroupId')
+        .where('person.ownerId', '=', input.ownerId)
+        .where('person_identity.identityId', '=', input.identityId)
         .executeTakeFirst();
 
     const existing = await find();
@@ -434,20 +445,24 @@ export class PersonRepository {
       .returning('id')
       .executeTakeFirstOrThrow();
 
-    const inserted = await db
-      .insertInto('person')
-      .values({
-        ownerId: input.ownerId,
-        personGroupId: group.id,
-        identityId: input.identityId,
-        name: input.name,
-        type: input.type,
-      })
-      .onConflict((oc) => oc.doNothing())
+    // The identity link is written before the person: it carries the (ownerId, identityId) key.
+    await clearOrphanPersonIdentity(db, input.ownerId, input.identityId);
+    const linked = await db
+      .insertInto('person_identity')
+      .values({ personGroupId: group.id, ownerId: input.ownerId, identityId: input.identityId })
+      .onConflict((oc) => oc.columns(['ownerId', 'identityId']).doNothing())
       .returning('personGroupId')
       .executeTakeFirst();
+    if (!linked) {
+      return (await find()) as { personGroupId: string };
+    }
 
-    return inserted ?? ((await find()) as { personGroupId: string });
+    await db
+      .insertInto('person')
+      .values({ ownerId: input.ownerId, personGroupId: group.id, name: input.name, type: input.type })
+      .execute();
+
+    return { personGroupId: group.id };
   }
 
   /**
@@ -613,6 +628,7 @@ export class PersonRepository {
     return this.db
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .$if(!!options.ownerId, (qb) => qb.where('person.ownerId', '=', options.ownerId!))
       .$if(options.thumbnailPath !== undefined, (qb) => qb.where('person.thumbnailPath', '=', options.thumbnailPath!))
       .$if(options.faceAssetId === null, (qb) => qb.where('person.faceAssetId', 'is', null))
@@ -734,6 +750,7 @@ export class PersonRepository {
     const items = await this.db
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .innerJoin('asset_face', 'asset_face.personGroupId', 'person.personGroupId')
       .innerJoin('asset', (join) =>
         join
@@ -840,6 +857,7 @@ export class PersonRepository {
     return this.db
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .leftJoin('asset_face', (join) =>
         join
           .onRef('asset_face.personGroupId', '=', 'person.personGroupId')
@@ -929,7 +947,7 @@ export class PersonRepository {
                 .selectFrom('face_identity_face')
                 .select('face_identity_face.assetFaceId')
                 .whereRef('face_identity_face.assetFaceId', '=', 'asset_face.id')
-                .whereRef('face_identity_face.identityId', '=', 'person.identityId'),
+                .where('face_identity_face.identityId', '=', personIdentityId()),
             ),
           ]),
         ),
@@ -949,7 +967,7 @@ export class PersonRepository {
               .selectFrom('face_identity_face')
               .select('face_identity_face.assetFaceId')
               .whereRef('face_identity_face.assetFaceId', '=', 'asset_face.id')
-              .where(sql<SqlBool>`face_identity_face."identityId" IS DISTINCT FROM person."identityId"`),
+              .where(sql<SqlBool>`face_identity_face."identityId" IS DISTINCT FROM ${personIdentityId()}`),
           ),
         ),
       )
@@ -993,7 +1011,7 @@ export class PersonRepository {
                 .selectFrom('face_identity_face')
                 .select('face_identity_face.assetFaceId')
                 .whereRef('face_identity_face.assetFaceId', '=', 'asset_face.id')
-                .whereRef('face_identity_face.identityId', '=', 'person.identityId'),
+                .where('face_identity_face.identityId', '=', personIdentityId()),
             ),
           ]),
         ),
@@ -1013,7 +1031,7 @@ export class PersonRepository {
               .selectFrom('face_identity_face')
               .select('face_identity_face.assetFaceId')
               .whereRef('face_identity_face.assetFaceId', '=', 'asset_face.id')
-              .where(sql<SqlBool>`face_identity_face."identityId" IS DISTINCT FROM person."identityId"`),
+              .where(sql<SqlBool>`face_identity_face."identityId" IS DISTINCT FROM ${personIdentityId()}`),
           ),
         ),
       )
@@ -1086,6 +1104,7 @@ export class PersonRepository {
     return this.db //
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .where('person.personGroupId', '=', personGroupId)
       .where('person.ownerId', '=', ownerId)
       .executeTakeFirst();
@@ -1108,6 +1127,7 @@ export class PersonRepository {
     return this.db //
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .where('person.personGroupId', '=', personGroupId)
       .executeTakeFirst();
   }
@@ -1121,6 +1141,7 @@ export class PersonRepository {
         )
         .selectFrom(['similarity_threshold', 'person'])
         .selectAll('person')
+        .select(personSidecarColumns())
         .where('person.ownerId', '=', userId)
         .where(
           () =>
@@ -1372,8 +1393,12 @@ export class PersonRepository {
     };
   }
 
-  create(person: Insertable<PersonTable>) {
-    return this.db.insertInto('person').values(person).returningAll().executeTakeFirstOrThrow();
+  async create({ identityId = null, ...person }: Insertable<PersonTable> & PersonSidecarFields) {
+    const created = await this.db.insertInto('person').values(person).returningAll().executeTakeFirstOrThrow();
+    if (identityId) {
+      await setPersonIdentity(this.db, created.personGroupId, identityId);
+    }
+    return { ...created, identityId };
   }
 
   /**
@@ -1384,7 +1409,7 @@ export class PersonRepository {
    * was a standalone primary key — and it is the only sanctioned way to mint a person, so the 1:1
    * invariant cannot be broken by accident at a call site.
    */
-  async createWithGroup(person: Omit<Insertable<PersonTable>, 'personGroupId'>) {
+  async createWithGroup(person: Omit<Insertable<PersonTable>, 'personGroupId'> & PersonSidecarFields) {
     const group = await this.createGroup(person.ownerId);
     return this.create({ ...person, personGroupId: group.id });
   }
@@ -1540,6 +1565,7 @@ export class PersonRepository {
       .where('person.ownerId', '=', person.ownerId)
       .where('person.personGroupId', '=', person.personGroupId)
       .returningAll()
+      .returning(personSidecarColumns())
       .executeTakeFirstOrThrow();
   }
 
@@ -1771,6 +1797,7 @@ export class PersonRepository {
     return this.db
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .where('person.personGroupId', 'in', personGroupIds)
       .orderBy('person.ownerId')
       .execute();

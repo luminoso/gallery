@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Expression, ExpressionBuilder, Kysely, SelectQueryBuilder, SqlBool, Transaction, sql } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
+import { personIdentityId } from 'src/gallery/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { FacePersonVerdictSource } from 'src/schema/tables/face-person-verdict.table.js';
 import { reviewableAssetVisibility } from 'src/utils/face-review.js';
@@ -202,10 +203,7 @@ export class FacePersonVerdictRepository {
         opts,
       ),
       (inner) =>
-        inner.or([
-          inner('neg.personGroupId', '=', personGroupId),
-          inner('neg.identityId', '=', inner.ref('person.identityId')),
-        ]),
+        inner.or([inner('neg.personGroupId', '=', personGroupId), inner('neg.identityId', '=', personIdentityId())]),
     );
 
     const result = await db.deleteFrom('face_person_verdict').where('id', 'in', eligibleIds).executeTakeFirst();
@@ -653,7 +651,7 @@ export class FacePersonVerdictRepository {
     // here for the negative-verdict anti-join below, rather than a correlated subquery per row.
     const scannable = await this.db
       .selectFrom('person')
-      .select(['person.personGroupId', 'person.identityId'])
+      .select(['person.personGroupId', personIdentityId().as('identityId')])
       .where('person.personGroupId', '=', personGroupId)
       .where(sql`BTRIM("person"."name")`, '<>', '')
       .where('person.isHidden', '=', false)
@@ -990,7 +988,7 @@ export class FacePersonVerdictRepository {
       .leftJoin('person', 'person.personGroupId', 'asset_face.personGroupId')
       .select((eb) => [
         'asset_face.personGroupId as personGroupId',
-        'person.identityId as identityId',
+        personIdentityId().as('identityId'),
         'person.name as ownerPersonName',
         'asset.ownerId as assetOwnerId',
         eb

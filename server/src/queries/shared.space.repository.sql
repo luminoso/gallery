@@ -2018,6 +2018,7 @@ select
   person."ownerId" = any ($1::uuid[]) as "isAssetAdder"
 from
   "person"
+  inner join "person_identity" on "person_identity"."personGroupId" = "person"."personGroupId"
   inner join "shared_space_member" on "shared_space_member"."userId" = "person"."ownerId"
   and "shared_space_member"."spaceId" = $2
   and "shared_space_member"."sharePersonMetadata" = $3
@@ -2028,7 +2029,7 @@ from
   left join "shared_space_person" on "shared_space_person"."id" = "shared_space_person_face"."personId"
   and "shared_space_person"."spaceId" = $4
 where
-  "person"."identityId" = $5
+  "person_identity"."identityId" = $5
 group by
   "person"."personGroupId",
   "person"."ownerId",
@@ -2160,7 +2161,7 @@ limit
 
 -- SharedSpaceRepository.getIdentityEvidenceForSpacePerson
 select
-  "person"."identityId",
+  "person_identity"."identityId",
   "person"."type",
   count("asset_face"."id") as "supportingFaceCount"
 from
@@ -2168,6 +2169,7 @@ from
   inner join "asset_face" on "asset_face"."id" = "shared_space_person_face"."assetFaceId"
   inner join "asset" on "asset"."id" = "asset_face"."assetId"
   inner join "person" on "person"."personGroupId" = "asset_face"."personGroupId"
+  inner join "person_identity" on "person_identity"."personGroupId" = "person"."personGroupId"
 where
   "shared_space_person_face"."personId" = $1
   and (
@@ -2217,13 +2219,12 @@ where
       )
     )
   )
-  and "person"."identityId" is not null
   and "asset_face"."deletedAt" is null
   and "asset_face"."isVisible" is true
   and "asset"."deletedAt" is null
   and "asset"."visibility" = 'timeline'
 group by
-  "person"."identityId",
+  "person_identity"."identityId",
   "person"."type"
 
 -- SharedSpaceRepository.updatePerson
@@ -3362,7 +3363,14 @@ select
   "asset_face"."id",
   "asset_face"."assetId",
   "asset_face"."personGroupId" as "personId",
-  "person"."identityId",
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId",
   "person"."type"
 from
   "asset_face"

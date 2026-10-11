@@ -208,7 +208,15 @@ limit
 
 -- PersonRepository.getAllForUser
 select
-  "person".*
+  "person".*,
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
   inner join "asset_face" on "asset_face"."personGroupId" = "person"."personGroupId"
@@ -256,7 +264,15 @@ offset
 
 -- PersonRepository.getAllWithoutFaces
 select
-  "person".*
+  "person".*,
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
   left join "asset_face" on "asset_face"."personGroupId" = "person"."personGroupId"
@@ -280,7 +296,15 @@ select
     from
       (
         select
-          "person".*
+          "person".*,
+          (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          ) as "identityId"
         from
           "person"
         where
@@ -312,7 +336,15 @@ select
     from
       (
         select
-          "person".*
+          "person".*,
+          (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          ) as "identityId"
         from
           "person"
         where
@@ -341,7 +373,15 @@ select
     from
       (
         select
-          "person".*
+          "person".*,
+          (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          ) as "identityId"
         from
           "person"
         where
@@ -364,7 +404,15 @@ select
     from
       (
         select
-          "person".*
+          "person".*,
+          (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          ) as "identityId"
         from
           "person"
         where
@@ -395,7 +443,14 @@ from
         "face_identity_face"
       where
         "face_identity_face"."assetFaceId" = "asset_face"."id"
-        and "face_identity_face"."identityId" = "person"."identityId"
+        and "face_identity_face"."identityId" = (
+          SELECT
+            "person_identity"."identityId"
+          FROM
+            "person_identity"
+          WHERE
+            "person_identity"."personGroupId" = "person"."personGroupId"
+        )
     )
   )
   inner join "asset" on "asset"."id" = "asset_face"."assetId"
@@ -412,7 +467,14 @@ where
       "face_identity_face"
     where
       "face_identity_face"."assetFaceId" = "asset_face"."id"
-      and face_identity_face."identityId" IS DISTINCT FROM person."identityId"
+      and face_identity_face."identityId" IS DISTINCT FROM (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      )
   )
   and "asset"."visibility" != $4
 order by
@@ -437,7 +499,14 @@ from
         "face_identity_face"
       where
         "face_identity_face"."assetFaceId" = "asset_face"."id"
-        and "face_identity_face"."identityId" = "person"."identityId"
+        and "face_identity_face"."identityId" = (
+          SELECT
+            "person_identity"."identityId"
+          FROM
+            "person_identity"
+          WHERE
+            "person_identity"."personGroupId" = "person"."personGroupId"
+        )
     )
   )
   inner join "asset" on "asset"."id" = "asset_face"."assetId"
@@ -455,7 +524,14 @@ where
       "face_identity_face"
     where
       "face_identity_face"."assetFaceId" = "asset_face"."id"
-      and face_identity_face."identityId" IS DISTINCT FROM person."identityId"
+      and face_identity_face."identityId" IS DISTINCT FROM (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      )
   )
 
 -- PersonRepository.getFaceForFacialRecognitionJob
@@ -541,7 +617,15 @@ where
 
 -- PersonRepository.getByGroupId
 select
-  "person".*
+  "person".*,
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
 where
@@ -550,7 +634,15 @@ where
 
 -- PersonRepository.getByGroupIdOnly
 select
-  "person".*
+  "person".*,
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
 where
@@ -563,7 +655,15 @@ with
       set_config('pg_trgm.word_similarity_threshold', '0.5', true) as "thresh"
   )
 select
-  "person".*
+  "person".*,
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "similarity_threshold",
   "person"
@@ -1094,7 +1194,15 @@ select
     from
       (
         select
-          "person".*
+          "person".*,
+          (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          ) as "identityId"
         from
           "person"
         where
@@ -1172,7 +1280,15 @@ where
 
 -- PersonRepository.getForMergePerson
 select
-  "person".*
+  "person".*,
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
 where

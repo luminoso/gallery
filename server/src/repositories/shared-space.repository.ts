@@ -13,6 +13,7 @@ import {
   SourceType,
   VectorIndex,
 } from 'src/enum.js';
+import { personIdentityId } from 'src/gallery/person-sidecar.js';
 import { probes } from 'src/repositories/database.repository.js';
 import { DB } from 'src/schema/index.js';
 import { SharedSpaceAlbumTable } from 'src/schema/tables/shared-space-album.table.js';
@@ -3107,9 +3108,10 @@ export class SharedSpaceRepository {
   }): Promise<SpacePersonPersonalThumbnail | undefined> {
     const ownThumbnail = await this.db
       .selectFrom('person')
+      .innerJoin('person_identity', 'person_identity.personGroupId', 'person.personGroupId')
       .select(['person.personGroupId as personId', 'person.thumbnailPath'])
       .where('person.ownerId', '=', input.userId)
-      .where('person.identityId', '=', input.identityId)
+      .where('person_identity.identityId', '=', input.identityId)
       .where('person.thumbnailPath', '!=', '')
       .orderBy('person.updatedAt', 'desc')
       .orderBy('person.personGroupId')
@@ -3121,10 +3123,11 @@ export class SharedSpaceRepository {
 
     return this.db
       .selectFrom('person')
+      .innerJoin('person_identity', 'person_identity.personGroupId', 'person.personGroupId')
       .innerJoin('asset_face', 'asset_face.id', 'person.faceAssetId')
       .innerJoin('asset', 'asset.id', 'asset_face.assetId')
       .select(['person.personGroupId as personId', 'person.thumbnailPath'])
-      .where('person.identityId', '=', input.identityId)
+      .where('person_identity.identityId', '=', input.identityId)
       .where('person.thumbnailPath', '!=', '')
       .where('asset_face.deletedAt', 'is', null)
       .where('asset_face.isVisible', '=', true)
@@ -3166,6 +3169,7 @@ export class SharedSpaceRepository {
 
     const personalCandidates = await this.db
       .selectFrom('person')
+      .innerJoin('person_identity', 'person_identity.personGroupId', 'person.personGroupId')
       .innerJoin('shared_space_member', (join) =>
         join
           .onRef('shared_space_member.userId', '=', 'person.ownerId')
@@ -3200,7 +3204,7 @@ export class SharedSpaceRepository {
         eb.fn.count('shared_space_person.id').$castTo<number>().as('supportingFaceCount'),
         isAssetAdderSql.as('isAssetAdder'),
       ])
-      .where('person.identityId', '=', input.identityId)
+      .where('person_identity.identityId', '=', input.identityId)
       .groupBy([
         'person.personGroupId',
         'person.ownerId',
@@ -3390,7 +3394,8 @@ export class SharedSpaceRepository {
       .innerJoin('asset_face', 'asset_face.id', 'shared_space_person_face.assetFaceId')
       .innerJoin('asset', 'asset.id', 'asset_face.assetId')
       .innerJoin('person', 'person.personGroupId', 'asset_face.personGroupId')
-      .select(['person.identityId', 'person.type'])
+      .innerJoin('person_identity', 'person_identity.personGroupId', 'person.personGroupId')
+      .select(['person_identity.identityId', 'person.type'])
       .select((eb) => eb.fn.count('asset_face.id').$castTo<number>().as('supportingFaceCount'))
       .where('shared_space_person_face.personId', '=', spacePersonId)
       .where((eb) =>
@@ -3416,13 +3421,12 @@ export class SharedSpaceRepository {
           }),
         ]),
       )
-      .where('person.identityId', 'is not', null)
       .where('asset_face.deletedAt', 'is', null)
       .where('asset_face.isVisible', 'is', true)
       .where('asset.deletedAt', 'is', null)
       .where('asset.visibility', '=', sql.lit(AssetVisibility.Timeline))
-      .$if(!!candidateIdentityIds?.length, (qb) => qb.where('person.identityId', 'in', candidateIdentityIds!))
-      .groupBy(['person.identityId', 'person.type'])
+      .$if(!!candidateIdentityIds?.length, (qb) => qb.where('person_identity.identityId', 'in', candidateIdentityIds!))
+      .groupBy(['person_identity.identityId', 'person.type'])
       .$castTo<SpacePersonIdentityEvidence>()
       .execute();
   }
@@ -4924,7 +4928,7 @@ export class SharedSpaceRepository {
         'asset_face.id',
         'asset_face.assetId',
         'asset_face.personGroupId as personId',
-        'person.identityId',
+        personIdentityId().as('identityId'),
         'person.type',
       ])
       .where('asset_face.assetId', '=', assetId)

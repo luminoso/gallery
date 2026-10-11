@@ -42,6 +42,7 @@ import {
   SearchOrderField,
   TimeBucketSize,
 } from 'src/enum.js';
+import { personSidecarColumns } from 'src/gallery/person-sidecar.js';
 import {
   AssetSearchBuilderOptions,
   AssetSearchBuilderV3Options,
@@ -325,6 +326,7 @@ export function withFacesAndPeople({ viewingUserId, withHidden, withDeletedFace 
             eb
               .selectFrom('person')
               .selectAll('person')
+              .select(personSidecarColumns())
               .whereRef('person.personGroupId', '=', 'asset_face.personGroupId')
               // Same reasoning as PersonRepository's `withPerson`: upstream hard-filters to the viewer's
               // own row because every member of a cluster group has one. Under Option M the group holds a

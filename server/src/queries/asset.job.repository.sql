@@ -905,8 +905,9 @@ select
 from
   "asset"
   inner join "asset_job_status" on "asset_job_status"."assetId" = "asset"."id"
+  left join "asset_job_status_gallery" on "asset_job_status_gallery"."assetId" = "asset"."id"
 where
-  "asset_job_status"."petsDetectedAt" is null
+  "asset_job_status_gallery"."petsDetectedAt" is null
   and "asset"."deletedAt" is null
   and "asset"."visibility" != $1
 

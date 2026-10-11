@@ -4,6 +4,7 @@ import { jsonObjectFrom } from 'kysely/helpers/postgres';
 import { InjectKysely } from 'nestjs-kysely';
 import type { PetSearchTable } from 'src/schema/tables/pet-search.table.js';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
+import { personIdentityId, personSidecarColumns } from 'src/gallery/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { AssetFaceTable } from 'src/schema/tables/asset-face.table.js';
 
@@ -81,7 +82,7 @@ export class PetFaceRepository {
       //    species bucket still holds its (embedding-less) faces after step 1.
       const orphaned = await trx
         .selectFrom('person')
-        .select(['person.personGroupId', 'person.identityId'])
+        .select(['person.personGroupId', personIdentityId().as('identityId')])
         .where('person.type', '=', 'pet')
         .where((eb) =>
           eb.not(
@@ -247,6 +248,7 @@ export class PetFaceRepository {
     return this.db
       .selectFrom('person')
       .selectAll('person')
+      .select(personSidecarColumns())
       .where('person.ownerId', '=', ownerId)
       .where('person.type', '=', 'pet')
       .where('person.species', '=', species)

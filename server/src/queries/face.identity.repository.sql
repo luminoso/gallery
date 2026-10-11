@@ -3,7 +3,14 @@
 -- FaceIdentityRepository.resolveScopedPersonTokens
 select
   "personGroupId",
-  "identityId"
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
 where
@@ -65,9 +72,10 @@ WITH
           1
         FROM
           person existing_person
+          INNER JOIN person_identity ON person_identity."personGroupId" = existing_person."personGroupId"
         WHERE
           existing_person."ownerId" = $6
-          AND existing_person."identityId" = shared_space_person."identityId"
+          AND person_identity."identityId" = shared_space_person."identityId"
       )
       AND NOT EXISTS (
         SELECT
@@ -142,7 +150,14 @@ WITH
   ),
   accessible_profiles AS (
     SELECT
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person.name,
       person."isHidden",
       person."isFavorite",
@@ -154,14 +169,28 @@ WITH
       person
     WHERE
       person."ownerId" = $4
-      AND person."identityId" IS NOT NULL
+      AND (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) IS NOT NULL
       AND EXISTS (
         SELECT
           1
         FROM
           accessible_faces
         WHERE
-          accessible_faces."identityId" = person."identityId"
+          accessible_faces."identityId" = (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          )
       )
       AND (
         $5 = ''
@@ -169,7 +198,14 @@ WITH
       )
       AND (
         $7 <> 'pet'
-        OR person."identityId" IN (
+        OR (
+          SELECT
+            "person_identity"."identityId"
+          FROM
+            "person_identity"
+          WHERE
+            "person_identity"."personGroupId" = "person"."personGroupId"
+        ) IN (
           SELECT
             "identityId"
           FROM
@@ -393,7 +429,14 @@ WITH
   ),
   accessible_profiles AS (
     SELECT
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person.name,
       person."isHidden",
       person."isFavorite",
@@ -405,14 +448,28 @@ WITH
       person
     WHERE
       person."ownerId" = $4
-      AND person."identityId" IS NOT NULL
+      AND (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) IS NOT NULL
       AND EXISTS (
         SELECT
           1
         FROM
           accessible_faces
         WHERE
-          accessible_faces."identityId" = person."identityId"
+          accessible_faces."identityId" = (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          )
       )
       AND (
         $5 = ''
@@ -420,7 +477,14 @@ WITH
       )
       AND (
         $7 <> 'pet'
-        OR person."identityId" IN (
+        OR (
+          SELECT
+            "person_identity"."identityId"
+          FROM
+            "person_identity"
+          WHERE
+            "person_identity"."personGroupId" = "person"."personGroupId"
+        ) IN (
           SELECT
             "identityId"
           FROM
@@ -653,7 +717,14 @@ WITH
   ),
   accessible_profiles AS (
     SELECT
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person."isHidden",
       person.name,
       person.type
@@ -661,14 +732,28 @@ WITH
       person
     WHERE
       person."ownerId" = $5
-      AND person."identityId" IS NOT NULL
+      AND (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) IS NOT NULL
       AND EXISTS (
         SELECT
           1
         FROM
           accessible_faces
         WHERE
-          accessible_faces."identityId" = person."identityId"
+          accessible_faces."identityId" = (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          )
       )
     UNION ALL
     SELECT
@@ -806,7 +891,14 @@ WITH
   ),
   accessible_profiles AS (
     SELECT
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person."isHidden",
       person.name,
       person.type
@@ -814,14 +906,28 @@ WITH
       person
     WHERE
       person."ownerId" = $5
-      AND person."identityId" IS NOT NULL
+      AND (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) IS NOT NULL
       AND EXISTS (
         SELECT
           1
         FROM
           accessible_faces
         WHERE
-          accessible_faces."identityId" = person."identityId"
+          accessible_faces."identityId" = (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          )
       )
     UNION ALL
     SELECT
@@ -1112,7 +1218,14 @@ WITH
   ),
   accessible_profiles AS (
     SELECT
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person.name,
       person."isHidden",
       person."isFavorite",
@@ -1124,14 +1237,28 @@ WITH
       person
     WHERE
       person."ownerId" = $4
-      AND person."identityId" IS NOT NULL
+      AND (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) IS NOT NULL
       AND EXISTS (
         SELECT
           1
         FROM
           accessible_faces
         WHERE
-          accessible_faces."identityId" = person."identityId"
+          accessible_faces."identityId" = (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          )
       )
       AND (
         $5 = ''
@@ -1139,7 +1266,14 @@ WITH
       )
       AND (
         $7 <> 'pet'
-        OR person."identityId" IN (
+        OR (
+          SELECT
+            "person_identity"."identityId"
+          FROM
+            "person_identity"
+          WHERE
+            "person_identity"."personGroupId" = "person"."personGroupId"
+        ) IN (
           SELECT
             "identityId"
           FROM
@@ -1403,7 +1537,14 @@ WITH
   ),
   accessible_profiles AS (
     SELECT
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person.name,
       person."isHidden",
       person."isFavorite",
@@ -1415,14 +1556,28 @@ WITH
       person
     WHERE
       person."ownerId" = $4
-      AND person."identityId" IS NOT NULL
+      AND (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) IS NOT NULL
       AND EXISTS (
         SELECT
           1
         FROM
           accessible_faces
         WHERE
-          accessible_faces."identityId" = person."identityId"
+          accessible_faces."identityId" = (
+            SELECT
+              "person_identity"."identityId"
+            FROM
+              "person_identity"
+            WHERE
+              "person_identity"."personGroupId" = "person"."personGroupId"
+          )
       )
       AND (
         $5 = ''
@@ -1430,7 +1585,14 @@ WITH
       )
       AND (
         $7 <> 'pet'
-        OR person."identityId" IN (
+        OR (
+          SELECT
+            "person_identity"."identityId"
+          FROM
+            "person_identity"
+          WHERE
+            "person_identity"."personGroupId" = "person"."personGroupId"
+        ) IN (
           SELECT
             "identityId"
           FROM
@@ -1747,7 +1909,14 @@ WITH
       'user-person'::text AS "profileType",
       person."personGroupId" AS "profileId",
       NULL::uuid AS "spaceId",
-      person."identityId",
+      (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      ) AS "identityId",
       person.name,
       person."birthDate",
       CASE
@@ -1765,7 +1934,14 @@ WITH
       0 AS "profileRank"
     FROM
       person
-      INNER JOIN requested_identities ON requested_identities."identityId" = person."identityId"
+      INNER JOIN requested_identities ON requested_identities."identityId" = (
+        SELECT
+          "person_identity"."identityId"
+        FROM
+          "person_identity"
+        WHERE
+          "person_identity"."personGroupId" = "person"."personGroupId"
+      )
     WHERE
       person."ownerId" = $5
       AND (
@@ -1913,7 +2089,14 @@ ORDER BY
 begin
 select
   "personGroupId",
-  "identityId",
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId",
   "type",
   "faceAssetId"
 from
@@ -1977,7 +2160,14 @@ where
 -- FaceIdentityRepository.getPersonVerdictTokens
 select
   "personGroupId",
-  "identityId"
+  (
+    SELECT
+      "person_identity"."identityId"
+    FROM
+      "person_identity"
+    WHERE
+      "person_identity"."personGroupId" = "person"."personGroupId"
+  ) as "identityId"
 from
   "person"
 where

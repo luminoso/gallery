@@ -14,6 +14,7 @@ import { FaceRepairScanTable } from 'src/schema/tables/face-repair-scan.table.js
 import { LibraryAssetAuditTable } from 'src/schema/tables/library-asset-audit.table.js';
 import { LibraryAuditTable } from 'src/schema/tables/library-audit.table.js';
 import { LibraryUserTable } from 'src/schema/tables/library-user.table.js';
+import { PersonIdentityTable } from 'src/schema/tables/person-identity.table.js';
 import { PetSearchTable } from 'src/schema/tables/pet-search.table.js';
 import { SharedLinkSpaceTable } from 'src/schema/tables/shared-link-space.table.js';
 import { SharedSpaceActivityTable } from 'src/schema/tables/shared-space-activity.table.js';
@@ -61,6 +62,7 @@ export const galleryTables = [
   LibraryUserTable,
   LibraryAssetAuditTable,
   FacePersonVerdictTable,
+  PersonIdentityTable,
   PetSearchTable,
   SharedLinkSpaceTable,
   SharedSpaceTable,
@@ -108,6 +110,7 @@ export interface GalleryDB {
   library_user: LibraryUserTable;
   library_asset_audit: LibraryAssetAuditTable;
   face_person_verdict: FacePersonVerdictTable;
+  person_identity: PersonIdentityTable;
   pet_search: PetSearchTable;
   shared_link_space: SharedLinkSpaceTable;
   shared_space: SharedSpaceTable;
