@@ -11,10 +11,6 @@ import { VIDEO_STREAM_SESSION_PK_CONSTRAINT } from 'src/utils/database.js';
 import { eiffelTower, train, waterfall } from 'test/fixtures/media.stub.js';
 import { ServiceMocks, mockSpawn, newTestService } from 'test/utils.js';
 
-type WithEnsureLocalFile = {
-  ensureLocalFile: (filePath: string) => Promise<{ localPath: string; cleanup: () => Promise<void> }>;
-};
-
 describe(TranscodingService.name, () => {
   let sut: TranscodingService;
   let mocks: ServiceMocks;
@@ -46,7 +42,7 @@ describe(TranscodingService.name, () => {
     // no-op cleanup); on S3 it downloads to a temp file. Fixtures use bare relative
     // filenames, so passthrough keeps the existing command/seek suites green.
     ensureLocalFileSpy = vi
-      .spyOn(sut as unknown as WithEnsureLocalFile, 'ensureLocalFile')
+      .spyOn(sut['backendMedia'], 'ensureLocalFile')
       .mockImplementation((filePath: string) => Promise.resolve({ localPath: filePath, cleanup: inputCleanup }));
   });
 

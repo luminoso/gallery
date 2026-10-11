@@ -2627,12 +2627,12 @@ export class SharedSpaceService extends BaseService {
         throw new NotFoundException();
       }
 
-      const sourcePath = await this.getFaceThumbnailSource(face.assetId);
+      const sourcePath = await this.backendMedia.getFaceThumbnailSource(face.assetId);
       if (!sourcePath) {
         throw new NotFoundException();
       }
 
-      return this.generateFaceThumbnailResponse(face, sourcePath);
+      return this.backendMedia.generateFaceThumbnailResponse(face, sourcePath);
     }
 
     if (person.identityId) {
@@ -2643,7 +2643,7 @@ export class SharedSpaceService extends BaseService {
       });
 
       if (personalThumbnail) {
-        return this.serveFromBackend(
+        return this.backendMedia.serveFromBackend(
           personalThumbnail.thumbnailPath,
           mimeTypes.lookup(personalThumbnail.thumbnailPath),
           CacheControl.PrivateWithoutCache,
@@ -2670,12 +2670,12 @@ export class SharedSpaceService extends BaseService {
       throw new NotFoundException();
     }
 
-    const sourcePath = await this.getFaceThumbnailSource(face.assetId);
+    const sourcePath = await this.backendMedia.getFaceThumbnailSource(face.assetId);
     if (!sourcePath) {
       throw new NotFoundException();
     }
 
-    return this.generateFaceThumbnailResponse(face, sourcePath);
+    return this.backendMedia.generateFaceThumbnailResponse(face, sourcePath);
   }
 
   async getSpacePersonFaceThumbnail(
@@ -2694,12 +2694,12 @@ export class SharedSpaceService extends BaseService {
       throw new NotFoundException();
     }
 
-    const sourcePath = await this.getFaceThumbnailSource(face.assetId);
+    const sourcePath = await this.backendMedia.getFaceThumbnailSource(face.assetId);
     if (!sourcePath) {
       throw new NotFoundException();
     }
 
-    return this.generateFaceThumbnailResponse(face, sourcePath);
+    return this.backendMedia.generateFaceThumbnailResponse(face, sourcePath);
   }
 
   async updateSpacePerson(

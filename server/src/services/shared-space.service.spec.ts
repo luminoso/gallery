@@ -7018,7 +7018,7 @@ describe(SharedSpaceService.name, () => {
         personId: newUuid(),
         thumbnailPath: '/personal.jpg',
       });
-      vi.spyOn(sut as any, 'ensureLocalFile').mockResolvedValue({ localPath: '/preview.jpg', cleanup });
+      vi.spyOn((sut as any).backendMedia, 'ensureLocalFile').mockResolvedValue({ localPath: '/preview.jpg', cleanup });
       mocks.media.decodeImage.mockResolvedValue({
         data: Buffer.from('decoded-image'),
         info: { width: 250, height: 250, channels: 3 },
@@ -7068,7 +7068,7 @@ describe(SharedSpaceService.name, () => {
       mocks.asset.getForThumbnail.mockResolvedValue({
         path: '/path/to/asset/preview.jpg',
       } as any);
-      vi.spyOn(sut as any, 'ensureLocalFile').mockResolvedValue({
+      vi.spyOn((sut as any).backendMedia, 'ensureLocalFile').mockResolvedValue({
         localPath: '/tmp/preview.jpg',
         cleanup,
       });
@@ -7140,7 +7140,7 @@ describe(SharedSpaceService.name, () => {
       mocks.asset.getForThumbnail.mockResolvedValue({
         path: '/path/to/asset/preview.jpg',
       } as any);
-      vi.spyOn(sut as any, 'ensureLocalFile').mockResolvedValue({
+      vi.spyOn((sut as any).backendMedia, 'ensureLocalFile').mockResolvedValue({
         localPath: '/tmp/preview.jpg',
         cleanup,
       });
@@ -7218,7 +7218,7 @@ describe(SharedSpaceService.name, () => {
       mocks.asset.getForThumbnail
         .mockResolvedValueOnce({ path: null } as any)
         .mockResolvedValueOnce({ path: '/path/to/asset/thumbnail.jpg' } as any);
-      vi.spyOn(sut as any, 'ensureLocalFile').mockResolvedValue({
+      vi.spyOn((sut as any).backendMedia, 'ensureLocalFile').mockResolvedValue({
         localPath: '/tmp/thumbnail.jpg',
         cleanup,
       });

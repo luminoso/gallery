@@ -593,7 +593,7 @@ export class AssetService extends BaseService {
     // assets guarantee sourceFile.path !== targetSidecarPath.
     const targetSidecarPath = `${targetAsset.originalPath}.xmp`;
 
-    const { localPath, cleanup } = await this.ensureLocalFile(sourceFile.path);
+    const { localPath, cleanup } = await this.backendMedia.ensureLocalFile(sourceFile.path);
     try {
       if (isAbsolute(targetSidecarPath)) {
         this.storageCore.ensureFolders(targetSidecarPath);
@@ -1014,7 +1014,7 @@ export class AssetService extends BaseService {
       // this runs inside the request.
       let probeResult: Awaited<ReturnType<typeof this.mediaRepository.probe>>;
       try {
-        probeResult = await this.mediaRepository.probe(await this.getProbeInput(asset.originalPath));
+        probeResult = await this.mediaRepository.probe(await this.backendMedia.getProbeInput(asset.originalPath));
       } catch {
         // Never surface or log the raw ffprobe error: for S3 originals getProbeInput yields a
         // presigned URL (a bearer credential) that ffprobe echoes in its stderr, which would

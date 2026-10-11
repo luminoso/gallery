@@ -2477,7 +2477,7 @@ describe(AssetService.name, () => {
 
     beforeEach(() => {
       cleanupSpy = vi.fn().mockResolvedValue(void 0);
-      vi.spyOn(sut as any, 'ensureLocalFile').mockImplementation(((p: string) =>
+      vi.spyOn((sut as any).backendMedia, 'ensureLocalFile').mockImplementation(((p: string) =>
         Promise.resolve({
           localPath: p.startsWith('/') ? p : `/tmp/dl-${path.basename(p)}`,
           cleanup: p.startsWith('/') ? async () => {} : cleanupSpy,
