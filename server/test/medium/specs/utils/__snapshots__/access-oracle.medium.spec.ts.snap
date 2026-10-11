@@ -59,6 +59,9 @@ exports[`checkAccess oracle > album.download 1`] = `
     "ownAlbum",
     "spaceAlbum",
   ],
+  "spaceAlbumLink": [
+    "spaceAlbum",
+  ],
   "spaceEditor": [
     "spaceAlbum",
   ],
@@ -78,6 +81,9 @@ exports[`checkAccess oracle > album.read 1`] = `
   ],
   "owner": [
     "ownAlbum",
+    "spaceAlbum",
+  ],
+  "spaceAlbumLink": [
     "spaceAlbum",
   ],
   "spaceEditor": [
@@ -178,12 +184,14 @@ exports[`checkAccess oracle > asset.copy 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
     "libraryAsset",
     "ownAsset",
     "spaceAsset",
     "stackAsset",
   ],
   "spaceEditor": [
+    "contributedAsset",
     "editorAsset",
   ],
 }
@@ -193,12 +201,14 @@ exports[`checkAccess oracle > asset.delete 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
     "libraryAsset",
     "ownAsset",
     "spaceAsset",
     "stackAsset",
   ],
   "spaceEditor": [
+    "contributedAsset",
     "editorAsset",
   ],
 }
@@ -216,6 +226,8 @@ exports[`checkAccess oracle > asset.download 1`] = `
   ],
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -229,8 +241,14 @@ exports[`checkAccess oracle > asset.download 1`] = `
     "spaceAsset",
     "stackAsset",
   ],
+  "spaceAlbumLink": [
+    "albumSpaceAsset",
+    "contributedAsset",
+  ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -241,6 +259,8 @@ exports[`checkAccess oracle > asset.download 1`] = `
   ],
   "spaceViewer": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -252,6 +272,8 @@ exports[`checkAccess oracle > asset.edit.create 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -260,6 +282,8 @@ exports[`checkAccess oracle > asset.edit.create 1`] = `
   ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -271,6 +295,8 @@ exports[`checkAccess oracle > asset.edit.delete 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -279,6 +305,8 @@ exports[`checkAccess oracle > asset.edit.delete 1`] = `
   ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -290,6 +318,8 @@ exports[`checkAccess oracle > asset.edit.get 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -298,6 +328,8 @@ exports[`checkAccess oracle > asset.edit.get 1`] = `
   ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -315,6 +347,8 @@ exports[`checkAccess oracle > asset.read 1`] = `
   ],
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -328,8 +362,14 @@ exports[`checkAccess oracle > asset.read 1`] = `
     "spaceAsset",
     "stackAsset",
   ],
+  "spaceAlbumLink": [
+    "albumSpaceAsset",
+    "contributedAsset",
+  ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -340,6 +380,8 @@ exports[`checkAccess oracle > asset.read 1`] = `
   ],
   "spaceViewer": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -351,6 +393,7 @@ exports[`checkAccess oracle > asset.share 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
     "libraryAsset",
     "ownAsset",
     "spaceAsset",
@@ -364,6 +407,7 @@ exports[`checkAccess oracle > asset.share 1`] = `
     "stackAsset",
   ],
   "spaceEditor": [
+    "contributedAsset",
     "editorAsset",
   ],
 }
@@ -375,6 +419,8 @@ exports[`checkAccess oracle > asset.update 1`] = `
 {
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -383,6 +429,8 @@ exports[`checkAccess oracle > asset.update 1`] = `
   ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -405,11 +453,17 @@ exports[`checkAccess oracle > asset.upload 1`] = `
     "spaceEditor",
   ],
   "spaceLink": [
+    "albumFace",
     "albumLink",
+    "albumPerson",
     "albumSpaceAsset",
     "albumViewer",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
+    "libraryFace",
+    "libraryPerson",
     "lockedSpaceAsset",
     "memory",
     "ownAlbum",
@@ -421,6 +475,7 @@ exports[`checkAccess oracle > asset.upload 1`] = `
     "session",
     "space",
     "spaceAlbum",
+    "spaceAlbumLink",
     "spaceAsset",
     "spaceEditor",
     "spaceFace",
@@ -451,6 +506,8 @@ exports[`checkAccess oracle > asset.view 1`] = `
   ],
   "owner": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "ownAsset",
@@ -464,8 +521,14 @@ exports[`checkAccess oracle > asset.view 1`] = `
     "spaceAsset",
     "stackAsset",
   ],
+  "spaceAlbumLink": [
+    "albumSpaceAsset",
+    "contributedAsset",
+  ],
   "spaceEditor": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -476,6 +539,8 @@ exports[`checkAccess oracle > asset.view 1`] = `
   ],
   "spaceViewer": [
     "albumSpaceAsset",
+    "archivedSpaceAsset",
+    "contributedAsset",
     "editorAsset",
     "libraryAsset",
     "spaceAsset",
@@ -526,6 +591,8 @@ exports[`checkAccess oracle > face.create 1`] = `{}`;
 exports[`checkAccess oracle > face.delete 1`] = `
 {
   "owner": [
+    "albumFace",
+    "libraryFace",
     "privateFace",
     "spaceFace",
   ],
@@ -615,6 +682,8 @@ exports[`checkAccess oracle > partner.update 1`] = `
 exports[`checkAccess oracle > person.create 1`] = `
 {
   "owner": [
+    "albumFace",
+    "libraryFace",
     "privateFace",
     "spaceFace",
   ],
@@ -624,6 +693,8 @@ exports[`checkAccess oracle > person.create 1`] = `
 exports[`checkAccess oracle > person.delete 1`] = `
 {
   "owner": [
+    "albumPerson",
+    "libraryPerson",
     "privatePerson",
     "spacePerson",
   ],
@@ -633,6 +704,8 @@ exports[`checkAccess oracle > person.delete 1`] = `
 exports[`checkAccess oracle > person.merge 1`] = `
 {
   "owner": [
+    "albumPerson",
+    "libraryPerson",
     "privatePerson",
     "spacePerson",
   ],
@@ -642,13 +715,19 @@ exports[`checkAccess oracle > person.merge 1`] = `
 exports[`checkAccess oracle > person.read 1`] = `
 {
   "owner": [
+    "albumPerson",
+    "libraryPerson",
     "privatePerson",
     "spacePerson",
   ],
   "spaceEditor": [
+    "albumPerson",
+    "libraryPerson",
     "spacePerson",
   ],
   "spaceViewer": [
+    "albumPerson",
+    "libraryPerson",
     "spacePerson",
   ],
 }
@@ -657,6 +736,8 @@ exports[`checkAccess oracle > person.read 1`] = `
 exports[`checkAccess oracle > person.reassign 1`] = `
 {
   "owner": [
+    "albumFace",
+    "libraryFace",
     "privateFace",
     "spaceFace",
   ],
@@ -668,6 +749,8 @@ exports[`checkAccess oracle > person.statistics 1`] = `{}`;
 exports[`checkAccess oracle > person.update 1`] = `
 {
   "owner": [
+    "albumPerson",
+    "libraryPerson",
     "privatePerson",
     "spacePerson",
   ],

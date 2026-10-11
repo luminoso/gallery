@@ -83,6 +83,35 @@ const seed = async () => {
     assetIds: [spaceAsset.id, editorAsset.id],
   });
 
+  // Grant branches the fixtures above leave unexercised: a cross-owner album contribution (album_space_asset), an
+  // archived space asset (the Archive half of spaceVisibleAssetVisibilities), people reached only through the library
+  // and album arms of spaceAssetPathBranches, and an album link made from the space (shared-link contributedAssets).
+  const { asset: contributedAsset } = await ctx.newAsset({ ownerId: spaceEditor.id });
+  await ctx.newAlbumSpaceAsset({
+    albumId: spaceAlbum.id,
+    assetId: contributedAsset.id,
+    spaceId: space.id,
+    addedById: spaceEditor.id,
+  });
+  const { asset: archivedSpaceAsset } = await ctx.newAsset({ ownerId: owner.id, visibility: AssetVisibility.Archive });
+  await ctx.newSharedSpaceAsset({ spaceId: space.id, assetId: archivedSpaceAsset.id });
+  const { person: libraryPerson } = await ctx.newPerson({ ownerId: owner.id });
+  const { result: libraryFace } = await ctx.newAssetFace({
+    assetId: libraryAsset.id,
+    personGroupId: libraryPerson.personGroupId,
+  });
+  const { person: albumPerson } = await ctx.newPerson({ ownerId: owner.id });
+  const { result: albumFace } = await ctx.newAssetFace({
+    assetId: albumSpaceAsset.id,
+    personGroupId: albumPerson.personGroupId,
+  });
+  const { sharedLink: spaceAlbumLink } = await ctx.newSharedLink({
+    userId: owner.id,
+    type: SharedLinkType.Album,
+    albumId: spaceAlbum.id,
+    spaceId: space.id,
+  });
+
   const labels = new Map<string, string>(
     Object.entries({
       owner: owner.id,
@@ -111,6 +140,13 @@ const seed = async () => {
       session: session.id,
       albumLink: albumLink.id,
       spaceLink: spaceLink.id,
+      contributedAsset: contributedAsset.id,
+      archivedSpaceAsset: archivedSpaceAsset.id,
+      libraryPerson: libraryPerson.personGroupId,
+      albumPerson: albumPerson.personGroupId,
+      libraryFace,
+      albumFace,
+      spaceAlbumLink: spaceAlbumLink.id,
     }).map(([label, id]) => [id as string, label]),
   );
 
@@ -127,6 +163,10 @@ const seed = async () => {
     spaceLink: factory.auth({
       user: { id: owner.id },
       sharedLink: { id: spaceLink.id, spaceId: space.id, allowUpload: true },
+    }),
+    spaceAlbumLink: factory.auth({
+      user: { id: owner.id },
+      sharedLink: { id: spaceAlbumLink.id, albumId: spaceAlbum.id, spaceId: space.id },
     }),
   };
 
