@@ -25,6 +25,7 @@ import 'package:openapi/api.dart';
 import '../../api.mocks.dart';
 import '../../fixtures/asset.stub.dart';
 import '../../fixtures/sync_stream.stub.dart';
+import '../../fixtures/user.stub.dart';
 import '../../infrastructure/repository.mock.dart';
 import '../../repository.mocks.dart';
 import '../../service.mocks.dart';
@@ -36,6 +37,30 @@ class _AbortCallbackWrapper {
 }
 
 class _MockAbortCallbackWrapper extends Mock implements _AbortCallbackWrapper {}
+
+/// Records every repository method the service calls, so a test can see whether an entity
+/// type reached any handler at all. Every public method on both repositories returns `Future<void>`.
+class _RecordingSyncStreamRepository implements SyncStreamRepository {
+  final List<Symbol> calls;
+  _RecordingSyncStreamRepository(this.calls);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    calls.add(invocation.memberName);
+    return Future<void>.value();
+  }
+}
+
+class _RecordingGallerySyncStreamRepository implements GallerySyncStreamRepository {
+  final List<Symbol> calls;
+  _RecordingGallerySyncStreamRepository(this.calls);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    calls.add(invocation.memberName);
+    return Future<void>.value();
+  }
+}
 
 /// A /server/features response; [syncRequestTypes] defaults to ABSENT — the shape an
 /// older fork server (no capability signalling) produces.
@@ -1087,6 +1112,47 @@ void main() {
       ).captured;
       expect(captured, hasLength(2));
       expect(captured[1], {'SharedSpaceAlbumsV1'});
+    });
+  });
+
+  // A fork type without a handler would be acked and silently dropped (the fork map is reached
+  // through `default`, so the compiler no longer checks exhaustiveness). Drive every entity type
+  // the generated client knows through the real dispatch and require it to reach a repository.
+  group("SyncStreamService - handler exhaustiveness", () {
+    // Checkpoint events carry no data to store.
+    const intentionallyUnhandled = {SyncEntityType.syncAckV1};
+
+    test("every SyncEntityType reaches a repository method", () async {
+      final calls = <Symbol>[];
+      sut = SyncStreamService(
+        syncApiRepository: mockSyncApiRepo,
+        syncStreamRepository: _RecordingSyncStreamRepository(calls),
+        gallerySyncStreamRepository: _RecordingGallerySyncStreamRepository(calls),
+        localAssetRepository: mockLocalAssetRepo,
+        trashedLocalAssetRepository: mockTrashedLocalAssetRepo,
+        assetMediaRepository: mockAssetMediaRepo,
+        permissionRepository: mockPermissionRepo,
+        api: mockApi,
+        syncMigrationRepository: mockSyncMigrationRepo,
+      );
+      // libraryDeleteV1 skips its sweep without a signed-in user.
+      await Store.put(StoreKey.currentUser, UserStub.admin);
+      addTearDown(() => Store.delete(StoreKey.currentUser));
+      await sut.sync();
+
+      final unhandled = <SyncEntityType>[];
+      for (final type in SyncEntityType.values) {
+        if (intentionallyUnhandled.contains(type)) {
+          continue;
+        }
+        calls.clear();
+        await handleEventsCallback([SyncEvent(type: type, data: Object(), ack: 'ack')], () => false, () {});
+        if (calls.isEmpty) {
+          unhandled.add(type);
+        }
+      }
+
+      expect(unhandled, isEmpty);
     });
   });
 }

@@ -364,10 +364,17 @@ class SyncStreamService {
         return _syncStreamRepository.updateAssetOcrV1(data.cast());
       case SyncEntityType.assetOcrDeleteV1:
         return _syncStreamRepository.deleteAssetOcrV1(data.cast());
-      // gallery-fork: every fork entity type dispatches through the Gallery handler map. A type
-      // in neither place (a newer server) is skipped, as sync_api.repository.dart already does.
+      // gallery-fork: every fork entity type dispatches through the Gallery handler map. The
+      // batch is still acked afterwards, so a type in neither place loses its data until a full
+      // reset; log it loudly. The exhaustiveness test in sync_stream_service_test.dart keeps
+      // this branch unreachable for every SyncEntityType the generated client knows.
       default:
-        return _galleryHandlers[type]?.call(data);
+        final handler = _galleryHandlers[type];
+        if (handler == null) {
+          _logger.warning("No sync handler for $type, ${data.length} events skipped");
+          return;
+        }
+        return handler(data);
     }
   }
 
