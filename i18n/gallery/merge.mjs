@@ -9,6 +9,9 @@
 // Collision policy: upstream wins, unless overrides.txt lists the key. A listed key takes the
 // overlay value where the overlay has one. A key listed as `exclusive` also drops upstream's
 // translation in every locale the overlay does not translate, because it describes the old wording.
+// A listed key the overlay leaves in English upstream's (a translation-only override) carries an
+// en:<hash> of that English, and --check fails when upstream rewords it.
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,27 +29,42 @@ const jsonFiles = (dir) =>
         .sort()
     : [];
 
-export const readOverrides = () => {
-  const file = path.join(galleryDir, "overrides.txt");
-  const overrides = new Map();
-  if (!fs.existsSync(file)) {
-    return overrides;
-  }
-  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
-    const [key, mode = "override", ...rest] = line
-      .replace(/#.*/, "")
-      .trim()
-      .split(/\s+/);
+// One line per key: `<key> [exclusive] [en:<hash>]`. The en: tag pins the upstream English a
+// translation-only override was written against (see enTag), so --check notices a rewording.
+export const parseOverrides = (text) => {
+  const entries = [];
+  for (const line of text.split("\n")) {
+    const [key, ...tokens] = line.replace(/#.*/, "").trim().split(/\s+/);
     if (!key) {
       continue;
     }
-    if (rest.length > 0 || !["override", "exclusive"].includes(mode)) {
-      throw new Error(`overrides.txt: cannot parse "${line}"`);
+    const entry = { key, mode: "override", en: undefined };
+    for (const token of tokens) {
+      if (token === "exclusive") {
+        entry.mode = token;
+      } else if (/^en:[0-9a-f]{8}$/.test(token)) {
+        entry.en = token.slice(3);
+      } else {
+        throw new Error(`overrides.txt: cannot parse "${line}"`);
+      }
     }
-    overrides.set(key, mode);
+    entries.push(entry);
   }
-  return overrides;
+  return entries;
 };
+
+const readOverrideEntries = () => {
+  const file = path.join(galleryDir, "overrides.txt");
+  return fs.existsSync(file)
+    ? parseOverrides(fs.readFileSync(file, "utf8"))
+    : [];
+};
+
+export const readOverrides = () =>
+  new Map(readOverrideEntries().map(({ key, mode }) => [key, mode]));
+
+export const enTag = (text) =>
+  createHash("sha256").update(text).digest("hex").slice(0, 8);
 
 const leaves = (obj, prefix = []) =>
   Object.entries(obj).flatMap(([key, value]) =>
@@ -129,7 +147,7 @@ export const galleryI18nVitePlugin = () => ({
   configureServer(server) {
     const rebuild = (file) => {
       if (
-        file.endsWith(".json") &&
+        (file.endsWith(".json") || file.endsWith("overrides.txt")) &&
         [galleryDir, upstreamDir].includes(path.dirname(file))
       ) {
         writeMergedI18n();
@@ -143,15 +161,38 @@ export const galleryI18nVitePlugin = () => ({
   },
 });
 
+// Translation-only override: the overlay keeps its own translations of upstream's English. When
+// upstream rewords that English, those translations describe the old text and must be reviewed.
+export const translationOnlyProblem = (key, tag, upstreamEn) => {
+  const current = enTag(upstreamEn);
+  if (tag === current) {
+    return undefined;
+  }
+  return tag
+    ? `overrides.txt ${key}: upstream reworded the English; check the gallery translations still match it, then set en:${current}`
+    : `overrides.txt ${key}: translation-only override without en:${current}; add the tag so a rewording is caught`;
+};
+
 export const checkOverlay = () => {
+  const entries = readOverrideEntries();
   const overrides = readOverrides();
   const problems = [];
   const en = readJson(path.join(upstreamDir, "en.json"));
-  for (const key of overrides.keys()) {
-    if (get(en, key.split(".")) === undefined) {
+  const galleryEn = readJson(path.join(galleryDir, "en.json"));
+  for (const { key, en: tag } of entries) {
+    const keys = key.split(".");
+    const upstreamEn = get(en, keys);
+    if (upstreamEn === undefined) {
       problems.push(
         `overrides.txt lists ${key}, which upstream en.json no longer has: drop the line`,
       );
+      continue;
+    }
+    if (get(galleryEn, keys) === undefined) {
+      const problem = translationOnlyProblem(key, tag, upstreamEn);
+      if (problem) {
+        problems.push(problem);
+      }
     }
   }
   for (const file of jsonFiles(galleryDir)) {

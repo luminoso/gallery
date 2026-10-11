@@ -5,7 +5,8 @@ Status: implemented (fork-layering wave 2, item 2.11).
 ## Problem
 
 The fork kept its strings inside upstream's `i18n/<locale>.json`: 1,294 added English keys, 9 reworded
-upstream keys, and per-locale edits across 57 files. Those files are sorted, so every upstream Weblate
+upstream keys, 35 upstream keys whose English it kept but whose translations it replaced, and per-locale
+edits across 57 files. Those files are sorted, so every upstream Weblate
 sync and every fork string PR touched the same regions, and i18n was the largest stop count in each
 rebase (13 + 5 stops in the v3.3.0 and v3.3.1 cycles).
 
@@ -14,7 +15,10 @@ rebase (13 + 5 stops in the v3.3.0 and v3.3.1 cycles).
 - `i18n/*.json` are upstream's files, byte-identical to the upstream tag. A rebase takes them as-is.
 - `i18n/gallery/<locale>.json` is the overlay: keys the fork added, plus the fork's text for upstream
   keys it rewords. Same format and sorting as upstream (nested JSON, prettier with `sort-json`).
-- `i18n/gallery/overrides.txt` lists the upstream keys the fork deliberately rewords.
+- `i18n/gallery/overrides.txt` lists the upstream keys the overlay deliberately overrides: 9 reworded in
+  English (and translated), and 35 translation-only overrides, where the overlay keeps its own translations
+  of upstream's unchanged English. Each translation-only line carries `en:<hash>`, the first 8 hex digits of
+  the SHA-256 of the upstream English it was translated against.
 - `i18n/gallery/merge.mjs` (Node, no dependencies) builds the bundle into the gitignored
   `i18n/gallery/merged/`, one file per upstream locale.
 
@@ -31,7 +35,11 @@ disclosures: falling back to English beats a stale translation there).
 
 `merge.test.mjs` pins this rule (`node --test`). `merge.mjs --check` (both run in CI's "Test i18n" job) reports overlay leaves that upstream now defines without a
 listing (dead: upstream wins), overrides that equal upstream (redundant), listed keys upstream no longer
-has, and overlay files without an upstream locale. A rebase that adds a same-named upstream key therefore
+has, overlay files without an upstream locale, and translation-only overrides whose `en:` tag is missing or
+no longer matches upstream's English (upstream reworded it, so the fork's translations describe the old
+text: review them, then update the tag). An upstream translation improvement to a key the fork overrides
+stays shadowed; that is the cost of keeping the fork's wording, and a rebase can drop an override line
+once upstream's translation is as good. A rebase that adds a same-named upstream key therefore
 fails CI instead of silently replacing the fork's text.
 
 ## Who reads the bundle
@@ -71,4 +79,7 @@ The existing component for `i18n/*.json` must stop pushing fork translations int
 make it read-only or remove it, since those files now track upstream byte for byte and any edit is lost
 at the next rebase. Weblate output may not match prettier's key order exactly, so run
 `pnpm format:fix` on the translation branch before merging (CI's "Test i18n" job fails otherwise).
-`weblate-lock.yml` (an upstream workflow) still matches non-English JSON under `i18n/`, overlay included.
+`weblate-lock.yml` (an upstream workflow) does not reach the overlay: its filter `i18n/!(en)**\.json` is a
+picomatch glob whose `**` does not cross `/`, so it matches `i18n/de.json` but not `i18n/gallery/de.json`.
+The workflow is also disabled in the repository settings ("Weblate checks", disabled manually). Leave the
+file as it is so it stays close to upstream.

@@ -16,6 +16,8 @@ fork_surface:
       - server/src/gallery/**
     web:
       - web/src/lib/gallery/**
+      # the i18n overlay; web and mobile both read it, i18n/*.json stay upstream's
+      - i18n/gallery/**
     mobile:
       - mobile/lib/gallery/**
     database:
