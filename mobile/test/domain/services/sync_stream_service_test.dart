@@ -1118,6 +1118,7 @@ void main() {
   // A fork type without a handler would be acked and silently dropped (the fork map is reached
   // through `default`, so the compiler no longer checks exhaustiveness). Drive every entity type
   // the generated client knows through the real dispatch and require it to reach a repository.
+  // This proves reachability only: a handler wired to the wrong repository method still passes.
   group("SyncStreamService - handler exhaustiveness", () {
     // Checkpoint events carry no data to store.
     const intentionallyUnhandled = {SyncEntityType.syncAckV1};

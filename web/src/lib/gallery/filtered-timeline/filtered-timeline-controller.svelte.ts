@@ -557,7 +557,8 @@ export class FilteredTimelineController {
 
   #buildPanelConfig(): FilterPanelConfig {
     const config = this.config;
-    const browse = () => config.browseConfig();
+    // Read once per rebuild: an in-flight provider keeps the entity it was built for.
+    const browse = config.browseConfig();
     const facetSuggestions = async (filters: FilterState) => {
       const facets = await this.loadSmartFacets(filters);
       if (!facets) {
@@ -582,23 +583,23 @@ export class FilteredTimelineController {
     const browseList = async (list: Promise<string[]> | undefined) => (await list) ?? [];
 
     const panelConfig: FilterPanelConfig = {
-      ...browse(),
+      ...browse,
       suggestionsProvider: (filters) =>
-        this.showSearchResults ? facetSuggestions(filters) : browse().suggestionsProvider!(filters),
+        this.showSearchResults ? facetSuggestions(filters) : browse.suggestionsProvider!(filters),
     };
     if (config.queryModeProviders !== false) {
       // #910: no baseline in query mode; `undefined` means "don't hide anything".
-      panelConfig.baselineProvider = async () => (this.showSearchResults ? undefined : browse().baselineProvider?.());
+      panelConfig.baselineProvider = async () => (this.showSearchResults ? undefined : browse.baselineProvider?.());
       panelConfig.providers = {
-        ...browse().providers,
+        ...browse.providers,
         cities: (country, context) =>
           this.showSearchResults
             ? facetList({ country }, 'cities')
-            : browseList(browse().providers?.cities?.(country, context)),
+            : browseList(browse.providers?.cities?.(country, context)),
         cameraModels: (make, context) =>
           this.showSearchResults
             ? facetList({ make }, 'cameraModels')
-            : browseList(browse().providers?.cameraModels?.(make, context)),
+            : browseList(browse.providers?.cameraModels?.(make, context)),
       };
     }
     const captured = withNameCapture(panelConfig, this.personNames, this.tagNames);
