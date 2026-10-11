@@ -305,6 +305,9 @@ export class MediumTestContext<S extends ClassConstructor<typeof BaseService> = 
 
   async newAlbumUser(dto: { albumId: string; userId: string; role?: AlbumUserRole }) {
     const { albumId, userId, role = AlbumUserRole.Editor } = dto;
+    // album_user.updateId is a v7 uuid from clock_timestamp(); without a millisecond gap the owner row written by
+    // newAlbum and this row can share a prefix, and sync emission order (by updateId) becomes random.
+    await wait(2);
     const result = await this.get(AlbumUserRepository).create({ albumId, userId, role });
     return { albumUser: { albumId, userId, role }, result };
   }
