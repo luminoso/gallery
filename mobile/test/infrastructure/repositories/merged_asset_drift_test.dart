@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:immich_mobile/data/db/main/database.dart';
-import 'package:immich_mobile/data/db/main/query/merged_asset.drift.dart';
+import 'package:immich_mobile/data/db/main/query/shared_space_timeline.drift.dart';
 import 'package:immich_mobile/data/db/main/table/remote/asset.drift.dart';
 import 'package:immich_mobile/data/db/main/table/remote/shared_space.drift.dart';
 import 'package:immich_mobile/data/db/main/table/remote/shared_space_album_asset.drift.dart';
@@ -100,8 +100,8 @@ void main() {
           .insert(SharedSpaceAssetEntityCompanion.insert(spaceId: spaceId, assetId: assetId));
 
       // From the viewer's main timeline, the asset should appear in a bucket.
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
           .get();
 
       expect(buckets, hasLength(1));
@@ -160,8 +160,8 @@ void main() {
         .into(db.sharedSpaceLibraryEntity)
         .insert(SharedSpaceLibraryEntityCompanion.insert(spaceId: spaceId, libraryId: libraryId));
 
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
         .get();
 
     expect(buckets, hasLength(1));
@@ -214,8 +214,8 @@ void main() {
         .into(db.sharedSpaceAssetEntity)
         .insert(SharedSpaceAssetEntityCompanion.insert(spaceId: spaceId, assetId: assetId));
 
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
         .get();
 
     expect(buckets, isEmpty);
@@ -267,8 +267,8 @@ void main() {
         .into(db.sharedSpaceAssetEntity)
         .insert(SharedSpaceAssetEntityCompanion.insert(spaceId: spaceId, assetId: assetId));
 
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [outsiderId], currentUserId: outsiderId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [outsiderId], currentUserId: outsiderId)
         .get();
 
     expect(buckets, isEmpty);
@@ -347,8 +347,8 @@ void main() {
 
     // userA's main timeline — userIds represents A + B (B is a partner), but
     // currentUserId is A, so only A's space memberships drive the lookup.
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [userAId, userBId], currentUserId: userAId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [userAId, userBId], currentUserId: userAId)
         .get();
 
     // Exactly one bucket with one asset: the partner asset. The space asset
@@ -400,8 +400,8 @@ void main() {
 
     // The WHERE clause is owned-OR-shared; the asset matches both, but it's
     // still a single row in remote_asset_entity so it must be counted once.
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
         .get();
 
     expect(buckets, hasLength(1));
@@ -492,9 +492,9 @@ void main() {
         .into(db.sharedSpaceAssetEntity)
         .insert(SharedSpaceAssetEntityCompanion.insert(spaceId: spaceId, assetId: assetId));
 
-    final emissions = <List<MergedBucketResult>>[];
-    final subscription = db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+    final emissions = <List<SpaceMergedBucketResult>>[];
+    final subscription = db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
         .watch()
         .listen(emissions.add);
 
@@ -560,8 +560,8 @@ void main() {
         .into(db.sharedSpaceAssetEntity)
         .insert(SharedSpaceAssetEntityCompanion.insert(spaceId: spaceId, assetId: assetId));
 
-    final rows = await db.mergedAssetDrift
-        .mergedAsset(userIds: [viewerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
+    final rows = await db.sharedSpaceTimelineDrift
+        .spaceMergedAsset(userIds: [viewerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
         .get();
 
     expect(rows, hasLength(1));
@@ -593,8 +593,8 @@ void main() {
           ),
         );
 
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [userId], currentUserId: userId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [userId], currentUserId: userId)
         .get();
 
     expect(buckets, hasLength(1));
@@ -631,8 +631,8 @@ void main() {
     await insertAsset('asset-2025-b', DateTime(2025, 12, 31, 12));
     await insertAsset('asset-2024-a', DateTime(2024, 6, 1, 12));
 
-    final buckets = await db.mergedAssetDrift
-        .mergedBucket(groupBy: GroupAssetsBy.year.index, userIds: [viewerId], currentUserId: viewerId)
+    final buckets = await db.sharedSpaceTimelineDrift
+        .spaceMergedBucket(groupBy: GroupAssetsBy.year.index, userIds: [viewerId], currentUserId: viewerId)
         .get();
 
     expect(buckets.map((bucket) => bucket.bucketDate), ['2025', '2024']);
@@ -718,15 +718,15 @@ void main() {
       await setUpSpaceAndMember(memberShowInTimeline: true);
       await linkAlbum(linkShowInTimeline: true);
 
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
           .get();
 
       expect(buckets, hasLength(1));
       expect(buckets.single.assetCount, 1);
 
-      final rows = await db.mergedAssetDrift
-          .mergedAsset(userIds: ['viewer-1'], currentUserId: 'viewer-1', limit: (_) => Limit(50, 0))
+      final rows = await db.sharedSpaceTimelineDrift
+          .spaceMergedAsset(userIds: ['viewer-1'], currentUserId: 'viewer-1', limit: (_) => Limit(50, 0))
           .get();
       expect(rows, hasLength(1));
       expect(rows.single.remoteId, 'asset-1');
@@ -740,8 +740,8 @@ void main() {
       await setUpSpaceAndMember(memberShowInTimeline: true);
       await linkAlbum(linkShowInTimeline: false);
 
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
           .get();
 
       expect(buckets, hasLength(1));
@@ -755,8 +755,8 @@ void main() {
       await setUpSpaceAndMember(memberShowInTimeline: false);
       await linkAlbum(linkShowInTimeline: true);
 
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
           .get();
 
       expect(buckets, isEmpty);
@@ -772,8 +772,8 @@ void main() {
           .insert(SharedSpaceEntityCompanion.insert(id: 'space-1', name: 'Album Space', createdById: 'owner-1'));
       await linkAlbum(linkShowInTimeline: true);
 
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
           .get();
 
       expect(buckets, isEmpty);
@@ -789,9 +789,9 @@ void main() {
       await setUpSpaceAndMember(memberShowInTimeline: true);
       await linkAlbum(linkShowInTimeline: true);
 
-      final emissions = <List<MergedBucketResult>>[];
-      final subscription = db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
+      final emissions = <List<SpaceMergedBucketResult>>[];
+      final subscription = db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
           .watch()
           .listen(emissions.add);
 
@@ -819,9 +819,9 @@ void main() {
         await setUpSpaceAndMember(memberShowInTimeline: true);
         await linkAlbum(linkShowInTimeline: true);
 
-        final emissions = <List<MergedBucketResult>>[];
-        final subscription = db.mergedAssetDrift
-            .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
+        final emissions = <List<SpaceMergedBucketResult>>[];
+        final subscription = db.sharedSpaceTimelineDrift
+            .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: ['viewer-1'], currentUserId: 'viewer-1')
             .watch()
             .listen(emissions.add);
 
@@ -903,26 +903,26 @@ void main() {
         .insert(SharedSpaceAlbumHiddenEntityCompanion.insert(spaceId: spaceId, albumId: albumId, userId: viewerId));
 
     Future<void> expectShows(String assetId) async {
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
           .get();
       expect(buckets, hasLength(1), reason: 'expected $assetId to show in bucket counts');
       expect(buckets.single.assetCount, 1);
 
-      final rows = await db.mergedAssetDrift
-          .mergedAsset(userIds: [viewerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
+      final rows = await db.sharedSpaceTimelineDrift
+          .spaceMergedAsset(userIds: [viewerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
           .get();
       expect(rows.map((r) => r.remoteId), contains(assetId), reason: 'expected $assetId to show in the asset list');
     }
 
     Future<void> expectAbsent(String assetId) async {
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId], currentUserId: viewerId)
           .get();
       expect(buckets, isEmpty, reason: 'expected $assetId to be absent from bucket counts');
 
-      final rows = await db.mergedAssetDrift
-          .mergedAsset(userIds: [viewerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
+      final rows = await db.sharedSpaceTimelineDrift
+          .spaceMergedAsset(userIds: [viewerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
           .get();
       expect(
         rows.map((r) => r.remoteId),
@@ -1114,8 +1114,8 @@ void main() {
         );
 
     Future<void> expectShowsForPair(String assetId) async {
-      final rows = await db.mergedAssetDrift
-          .mergedAsset(userIds: [viewerId, partnerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
+      final rows = await db.sharedSpaceTimelineDrift
+          .spaceMergedAsset(userIds: [viewerId, partnerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
           .get();
       expect(
         rows.map((r) => r.remoteId),
@@ -1123,8 +1123,8 @@ void main() {
         reason: "expected $assetId to show — a partner's asset is never subtracted by MY hides",
       );
 
-      final buckets = await db.mergedAssetDrift
-          .mergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId, partnerId], currentUserId: viewerId)
+      final buckets = await db.sharedSpaceTimelineDrift
+          .spaceMergedBucket(groupBy: GroupAssetsBy.day.index, userIds: [viewerId, partnerId], currentUserId: viewerId)
           .get();
       expect(
         buckets.fold<int>(0, (sum, b) => sum + b.assetCount),
@@ -1191,8 +1191,8 @@ void main() {
       await insertMember('space-h', showInTimeline: false);
       await insertDirectSpaceAsset('space-h', 'my-asset');
 
-      final rows = await db.mergedAssetDrift
-          .mergedAsset(userIds: [viewerId, partnerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
+      final rows = await db.sharedSpaceTimelineDrift
+          .spaceMergedAsset(userIds: [viewerId, partnerId], currentUserId: viewerId, limit: (_) => Limit(50, 0))
           .get();
       expect(rows.map((r) => r.remoteId), isNot(contains('my-asset')));
     });
