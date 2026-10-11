@@ -61,8 +61,9 @@
     onQueryChange: () => spaceUiManager.setCoverCollapsed(false),
   });
 
-  // Sync when navigating between spaces (component persists, data updates)
-  $effect(() => {
+  // Sync when navigating between spaces (component persists, data updates). `pre` so the switch
+  // re-seeds the controller before its URL effect sees the new URL as a query change.
+  $effect.pre(() => {
     if (data.space.id === space.id) {
       return;
     }

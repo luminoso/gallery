@@ -241,7 +241,8 @@
         : undefined,
   });
 
-  $effect(() => {
+  // `pre` so the switch re-seeds the controller before its URL effect sees the new URL.
+  $effect.pre(() => {
     if (data.album.id === album.id) {
       return;
     }

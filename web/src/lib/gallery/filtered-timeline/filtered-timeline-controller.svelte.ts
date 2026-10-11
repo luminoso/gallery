@@ -299,8 +299,8 @@ export class FilteredTimelineController {
   /** Re-seeds everything from the URL, for a route whose component persists across entities. */
   reset() {
     this.#abortFacets();
-    this.personNames.clear();
-    this.tagNames.clear();
+    // Person/tag names are kept: they are keyed by id, and the typed-search names for the new URL
+    // may already have been consumed (destructively) by the URL effect.
     this.albumNames.clear();
     this.ownerNames.clear();
     this.#hydrateFromUrl();
