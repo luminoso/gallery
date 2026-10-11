@@ -558,11 +558,9 @@ export class SyncTestContext extends MediumTestContext<typeof SyncService> {
   constructor(database: Kysely<DB>) {
     super(SyncService, {
       database,
-      real: [SyncRepository, SyncCheckpointRepository, SessionRepository],
+      real: [SyncRepository, GallerySyncRepository, SyncCheckpointRepository, SessionRepository],
       mock: [LoggingRepository],
     });
-    // SyncService gets the fork streams' repository by property injection, outside the positional deps.
-    this.sut['gallerySyncRepository'] = new GallerySyncRepository(database);
   }
 
   async syncStream(auth: AuthDto, types: SyncRequestType[], shouldReset?: boolean) {
@@ -700,6 +698,7 @@ const newRealRepository = <T extends BaseServiceDeps[number]>(key: T, db: Kysely
     case SharedSpaceRepository:
     case StackRepository:
     case SyncRepository:
+    case GallerySyncRepository:
     case SyncCheckpointRepository:
     case SystemMetadataRepository:
     case UserRepository:
@@ -789,6 +788,7 @@ const newMockRepository = <T>(key: ClassConstructor<T>) => {
     case PersonRepository:
     case SessionRepository:
     case SyncRepository:
+    case GallerySyncRepository:
     case SyncCheckpointRepository:
     case SystemMetadataRepository:
     case UserRepository:

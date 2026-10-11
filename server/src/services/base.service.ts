@@ -15,6 +15,7 @@ import { QueueMaintenanceRepository } from 'src/gallery/queue-maintenance.reposi
 import { SmartFacetRepository } from 'src/gallery/smart-facet.repository.js';
 import { SpaceAlbumRepository } from 'src/gallery/space-album.repository.js';
 import { computePhysicalUsage } from 'src/gallery/storage-usage.js';
+import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
 import { ActivityRepository } from 'src/repositories/activity.repository.js';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository.js';
@@ -170,6 +171,7 @@ export const BASE_SERVICE_DEPENDENCIES = [
   SpaceAlbumRepository,
   PetFaceRepository,
   FaceSearchRepository,
+  GallerySyncRepository,
 ] as const;
 
 @Injectable()
@@ -254,6 +256,7 @@ export class BaseService {
     protected spaceAlbumRepository: SpaceAlbumRepository,
     protected petFaceRepository: PetFaceRepository,
     protected faceSearchRepository: FaceSearchRepository,
+    protected gallerySyncRepository: GallerySyncRepository,
   ) {
     this.logger.setContext(this.constructor.name);
     this.storageCore = StorageCore.create(
@@ -366,6 +369,7 @@ export class BaseService {
       ctx.spaceAlbumRepository,
       ctx.petFaceRepository,
       ctx.faceSearchRepository,
+      ctx.gallerySyncRepository,
     );
 
     service.logger.setContext(BaseService.name);

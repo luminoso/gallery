@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Insertable } from 'kysely';
 import { DateTime, Duration } from 'luxon';
 import { Writable } from 'node:stream';
@@ -7,7 +7,6 @@ import { AuthDto } from 'src/dtos/auth.dto.js';
 import { AssetEditAction } from 'src/dtos/editing.dto.js';
 import { SyncAckDeleteDto, SyncAckSetDto, SyncStreamDto, syncAlbumV2ToV1 } from 'src/dtos/sync.dto.js';
 import { JobName, MemoryType, QueueName, SyncEntityType, SyncRequestType } from 'src/enum.js';
-import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
 import { GallerySyncStreams } from 'src/gallery/sync/gallery-sync.streams.js';
 import { SyncQueryOptions } from 'src/repositories/sync.repository.js';
 import { SessionSyncCheckpointTable } from 'src/schema/tables/sync-checkpoint.table.js';
@@ -74,9 +73,6 @@ const throwSessionRequired = () => {
 
 @Injectable()
 export class SyncService extends BaseService {
-  // Property-injected so the fork sync streams add no slot to BaseService's positional dependency list.
-  @Inject(GallerySyncRepository) private gallerySyncRepository!: GallerySyncRepository;
-
   getAcks(auth: AuthDto) {
     const sessionId = auth.session?.id;
     if (!sessionId) {

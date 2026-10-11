@@ -203,8 +203,9 @@ const setupSyncMocks = (mocks: ServiceMocks) => {
     sharedSpaceAlbumToAsset: makeSub(),
   };
 
-  // Assign onto the mock
+  // Assign onto the mock; the fork streams live on GallerySyncRepository, backed by the same sub-mocks.
   Object.assign(mocks.sync, subs);
+  Object.assign(mocks.gallerySync, subs);
 
   return subs;
 };
@@ -272,8 +273,6 @@ describe(SyncService.name, () => {
   beforeEach(() => {
     ({ sut, mocks } = newTestService(SyncService));
     syncSubs = setupSyncMocks(mocks);
-    // The fork streams live on GallerySyncRepository; the shared sub-mocks back both repositories.
-    sut['gallerySyncRepository'] = syncSubs as any;
     // These strict mocks need implementations since they're called in test paths
     mocks.syncCheckpoint.upsertAll.mockResolvedValue(undefined as any);
     mocks.syncCheckpoint.deleteAll.mockResolvedValue(undefined as any);

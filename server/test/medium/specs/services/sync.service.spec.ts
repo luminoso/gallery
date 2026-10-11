@@ -17,10 +17,9 @@ let defaultDatabase: Kysely<DB>;
 const setup = (db?: Kysely<DB>) => {
   const result = newMediumService(SyncService, {
     database: db || defaultDatabase,
-    real: [DatabaseRepository, SyncRepository],
+    real: [DatabaseRepository, SyncRepository, GallerySyncRepository],
     mock: [LoggingRepository],
   });
-  result.sut['gallerySyncRepository'] = new GallerySyncRepository(result.ctx.database);
   return result;
 };
 
