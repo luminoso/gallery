@@ -21,6 +21,8 @@ import 'package:stream_transform/stream_transform.dart';
 // gallery-fork: Gallery timeline queries (spaces, viewer visibility, temporal scope).
 part 'shared_space_timeline.repository.dart';
 
+// gallery-fork: the app builds its timelines from SharedSpaceTimelineRepository; the upstream-shaped
+// routes here (main(), favorite(), ...) are unused and main() would drop Space assets.
 @DriftAccessor()
 class TimelineRepository extends DatabaseAccessor<Drift> with $TimelineRepositoryMixin {
   TimelineRepository(super.attachedDatabase);
@@ -116,6 +118,8 @@ class TimelineRepository extends DatabaseAccessor<Drift> with $TimelineRepositor
     Expression<bool> extraWhere = const Constant(true),
   }) {
     if (groupBy == GroupAssetsBy.none) {
+      // gallery-fork: count through the asset join so extraWhere (the temporal scope, which reads
+      // local_asset columns) applies here too. Do not restore upstream's album-row count on rebase.
       final countExp = _db.localAssetEntity.id.count();
       final query = _db.localAssetEntity.selectOnly()
         ..addColumns([countExp])
@@ -200,6 +204,9 @@ class TimelineRepository extends DatabaseAccessor<Drift> with $TimelineRepositor
     Expression<bool> extraWhere = const Constant(true),
   }) {
     if (groupBy == GroupAssetsBy.none) {
+      // gallery-fork: count through the asset join with deletedAt IS NULL and extraWhere, so the
+      // ungrouped count matches the grouped buckets and assets below (upstream counts album rows,
+      // trashed assets included). Do not restore upstream's count on rebase.
       final countExp = _db.remoteAssetEntity.id.count();
       final query = _db.remoteAssetEntity.selectOnly()
         ..addColumns([countExp])

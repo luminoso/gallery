@@ -425,7 +425,13 @@ class GallerySyncStreamRepository extends DatabaseAccessor<Drift> {
             createdAt: Value(album.createdAt),
             updatedAt: Value(album.updatedAt),
             isActivityEnabled: Value(album.isActivityEnabled),
-            order: Value(album.order.toAlbumAssetOrder().index),
+            // Inline rather than a second copy of sync_stream.repository.dart's file-private extension.
+            order: Value(
+              switch (album.order) {
+                AssetOrder.asc => AlbumAssetOrder.asc,
+                AssetOrder.desc => AlbumAssetOrder.desc,
+              }.index,
+            ),
           );
           batch.insert(_db.sharedSpaceAlbumEntity, companion, onConflict: DoUpdate((_) => companion));
         }
@@ -718,11 +724,4 @@ class GallerySyncStreamRepository extends DatabaseAccessor<Drift> {
       // We do not rethrow here as this is a client-only cleanup and should not affect the sync process
     }
   }
-}
-
-extension on AssetOrder {
-  AlbumAssetOrder toAlbumAssetOrder() => switch (this) {
-    AssetOrder.asc => AlbumAssetOrder.asc,
-    AssetOrder.desc => AlbumAssetOrder.desc,
-  };
 }
