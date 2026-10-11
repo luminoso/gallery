@@ -222,22 +222,28 @@ export class SharedLinkRepository {
   }
 
   async create(entity: Insertable<SharedLinkTable> & { assetIds?: string[]; spaceId?: string | null }) {
-    const { id } = await this.db
-      .insertInto('shared_link')
-      .values(omit(entity, 'assetIds', 'spaceId'))
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    // gallery-fork: one transaction, so a failed shared_link_space write cannot leave a space link behind
+    // that serves only the creator's assets.
+    const { id } = await this.db.transaction().execute(async (trx) => {
+      const link = await trx
+        .insertInto('shared_link')
+        .values(omit(entity, 'assetIds', 'spaceId'))
+        .returningAll()
+        .executeTakeFirstOrThrow();
 
-    if (entity.spaceId) {
-      await this.db.insertInto('shared_link_space').values({ sharedLinkId: id, spaceId: entity.spaceId }).execute();
-    }
+      if (entity.spaceId) {
+        await trx.insertInto('shared_link_space').values({ sharedLinkId: link.id, spaceId: entity.spaceId }).execute();
+      }
 
-    if (entity.assetIds && entity.assetIds.length > 0) {
-      await this.db
-        .insertInto('shared_link_asset')
-        .values(entity.assetIds!.map((assetId) => ({ assetId, sharedLinkId: id })))
-        .execute();
-    }
+      if (entity.assetIds && entity.assetIds.length > 0) {
+        await trx
+          .insertInto('shared_link_asset')
+          .values(entity.assetIds!.map((assetId) => ({ assetId, sharedLinkId: link.id })))
+          .execute();
+      }
+
+      return link;
+    });
 
     return this.getSharedLinks(id);
   }

@@ -9,6 +9,7 @@
  * Assets the link creator DOES own are unaffected by any of that — they were always theirs to share.
  */
 import { Kysely, sql } from 'kysely';
+import { randomBytes } from 'node:crypto';
 import { AssetVisibility, SharedLinkType, SharedSpaceRole } from 'src/enum.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
 import { AlbumRepository } from 'src/repositories/album.repository.js';
@@ -18,6 +19,7 @@ import { SharedSpaceRepository } from 'src/repositories/shared-space.repository.
 import { DB } from 'src/schema/index.js';
 import { BaseService } from 'src/services/base.service.js';
 import { newMediumService } from 'test/medium.factory.js';
+import { newUuid } from 'test/small.factory.js';
 import { getKyselyDB } from 'test/utils.js';
 
 let defaultDatabase: Kysely<DB>;
@@ -499,6 +501,29 @@ describe('shared_link_space sidecar', () => {
 
     await expect(
       defaultDatabase.selectFrom('shared_link_space').selectAll().where('sharedLinkId', '=', sharedLink.id).execute(),
+    ).resolves.toEqual([]);
+  });
+});
+
+describe('SharedLinkRepository.create', () => {
+  it('does not keep the shared_link row when the shared_link_space write fails', async () => {
+    const { ctx, sharedLinkRepo } = setup();
+    const { user } = await ctx.newUser();
+    const key = randomBytes(32);
+
+    // no such space: the shared_link_space insert fails its FK after the shared_link insert
+    await expect(
+      sharedLinkRepo.create({
+        userId: user.id,
+        type: SharedLinkType.Individual,
+        key,
+        allowUpload: false,
+        spaceId: newUuid(),
+      }),
+    ).rejects.toThrow(/shared_link_space_spaceId_fkey/);
+
+    await expect(
+      defaultDatabase.selectFrom('shared_link').select('id').where('key', '=', key).execute(),
     ).resolves.toEqual([]);
   });
 });
