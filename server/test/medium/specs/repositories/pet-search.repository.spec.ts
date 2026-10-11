@@ -559,7 +559,7 @@ describe('PetFaceRepository.getLatestPetDate (medium)', () => {
     const petsDetectedAt = new Date();
     petsDetectedAt.setHours(18, 0, 0, 0);
     await ctx.database
-      .insertInto('asset_job_status')
+      .insertInto('asset_job_status_gallery')
       .values({ assetId: asset.id, petsDetectedAt })
       .onConflict((oc) => oc.column('assetId').doUpdateSet({ petsDetectedAt }))
       .execute();

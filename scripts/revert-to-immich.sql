@@ -363,6 +363,9 @@ DROP TABLE IF EXISTS "asset_duplicate_checksum" CASCADE;
 DROP TABLE IF EXISTS "asset_favorite_audit" CASCADE;
 DROP TABLE IF EXISTS "asset_favorite" CASCADE;
 
+-- Gallery job stamps (pet detection, classification) beside asset_job_status.
+DROP TABLE IF EXISTS "asset_job_status_gallery" CASCADE;
+
 -- -----------------------------------------------------------------------------
 -- 3. Drop Gallery-only functions.
 --
@@ -735,6 +738,7 @@ DELETE FROM "kysely_migrations"
   '1794100000000-DropAssetIsFavoriteColumn',
   '1796000000000-AddAssetFaceCreatedBy',
   '1797000000000-AddAssetLocalDateTimeIndex',
+  '1798500000000-AddAssetJobStatusGalleryTable',
   -- Pre-rename name, recorded by builds from before the ledger split: this migration was
   -- renumbered off 1793000000000 when fork PR #1060 took that timestamp, but rolling RC instances
   -- had already recorded the pre-rename name. Drop that row too, or upstream's migrator aborts
@@ -842,6 +846,7 @@ BEGIN
        'face_repair_scan_flagged_face', 'face_repair_lock',
        'pet_search',
        'asset_favorite_audit', 'asset_favorite',
+       'asset_job_status_gallery',
        'gallery_migrations', 'gallery_migrations_lock'
      );
   IF fork_tables_left > 0 THEN

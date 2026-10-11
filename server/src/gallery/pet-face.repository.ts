@@ -220,11 +220,27 @@ export class PetFaceRepository {
    */
   async getLatestPetDate(): Promise<Date | undefined> {
     const result = await this.db
-      .selectFrom('asset_job_status')
-      .select((eb) => eb.fn.max('asset_job_status.petsDetectedAt').as('latestDate'))
+      .selectFrom('asset_job_status_gallery')
+      .select((eb) => eb.fn.max('asset_job_status_gallery.petsDetectedAt').as('latestDate'))
       .executeTakeFirst();
 
     return result?.latestDate ?? undefined;
+  }
+
+  async setPetsDetectedAt(assetId: string): Promise<void> {
+    const petsDetectedAt = new Date();
+    await this.db
+      .insertInto('asset_job_status_gallery')
+      .columns(['assetId', 'petsDetectedAt'])
+      // insert-select: an asset deleted mid-job inserts nothing instead of failing the FK
+      .expression((eb) =>
+        eb
+          .selectFrom('asset')
+          .select((s) => [s.ref('asset.id').as('assetId'), s.val(petsDetectedAt).as('petsDetectedAt')])
+          .where('asset.id', '=', assetId),
+      )
+      .onConflict((oc) => oc.column('assetId').doUpdateSet({ petsDetectedAt }))
+      .execute();
   }
 
   getByOwnerAndSpecies(ownerId: string, species: string) {

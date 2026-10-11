@@ -53,17 +53,25 @@ export class ClassificationRepository {
 
   async resetClassifiedAt() {
     await this.db
-      .updateTable('asset_job_status')
+      .updateTable('asset_job_status_gallery')
       .set({ classifiedAt: null })
       .where('classifiedAt', 'is not', null)
       .execute();
   }
 
   async setClassifiedAt(assetId: string) {
+    const classifiedAt = new Date().toISOString();
     await this.db
-      .updateTable('asset_job_status')
-      .set({ classifiedAt: new Date().toISOString() })
-      .where('assetId', '=', assetId)
+      .insertInto('asset_job_status_gallery')
+      .columns(['assetId', 'classifiedAt'])
+      // insert-select: an asset deleted mid-job inserts nothing instead of failing the FK
+      .expression((eb) =>
+        eb
+          .selectFrom('asset')
+          .select((s) => [s.ref('asset.id').as('assetId'), s.val(classifiedAt).as('classifiedAt')])
+          .where('asset.id', '=', assetId),
+      )
+      .onConflict((oc) => oc.column('assetId').doUpdateSet({ classifiedAt }))
       .execute();
   }
 
@@ -97,8 +105,9 @@ export class ClassificationRepository {
       .selectFrom('asset_job_status as ajs')
       .innerJoin('asset as a', 'a.id', 'ajs.assetId')
       .innerJoin('smart_search as ss', 'ss.assetId', 'a.id')
+      .leftJoin('asset_job_status_gallery as ajsg', 'ajsg.assetId', 'a.id')
       .select(['a.id', 'a.ownerId'])
-      .where('ajs.classifiedAt', 'is', null)
+      .where('ajsg.classifiedAt', 'is', null)
       .stream();
   }
 }
