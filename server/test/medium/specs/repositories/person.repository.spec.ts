@@ -8,7 +8,7 @@ import { PersonRepository } from 'src/repositories/person.repository.js';
 import { DB } from 'src/schema/index.js';
 import { BaseService } from 'src/services/base.service.js';
 import { newMediumService, updatePersonForTest } from 'test/medium.factory.js';
-import { newEmbedding } from 'test/small.factory.js';
+import { newEmbedding, newUuid } from 'test/small.factory.js';
 import { getKyselyDB } from 'test/utils.js';
 
 let defaultDatabase: Kysely<DB>;
@@ -180,6 +180,20 @@ describe(PersonRepository.name, () => {
         .where('person.personGroupId', '=', group.id)
         .execute();
       expect(people).toEqual([{ ownerId: user1.id }]);
+    });
+
+    it('should not keep the person row when a sidecar write fails', async () => {
+      const { ctx, sut } = setup();
+      const { user } = await ctx.newUser();
+      const group = await sut.createGroup(user.id);
+
+      // no such face_identity: the person_identity insert fails its FK after the person insert
+      await expect(
+        sut.create({ ownerId: user.id, personGroupId: group.id, type: 'pet', identityId: newUuid() }),
+      ).rejects.toThrow(/person_identity_identityId_fkey/);
+
+      const people = await ctx.database.selectFrom('person').where('personGroupId', '=', group.id).execute();
+      expect(people).toEqual([]);
     });
   });
 

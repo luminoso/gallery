@@ -1418,11 +1418,15 @@ export class PersonRepository {
     species = null,
     ...person
   }: Insertable<PersonTable> & PersonSidecarFields) {
-    const created = await this.db.insertInto('person').values(person).returningAll().executeTakeFirstOrThrow();
-    await writePersonSidecars(this.db, created.personGroupId, {
-      identityId: identityId ?? undefined,
-      type: type === 'pet' ? type : undefined,
-      species: type === 'pet' ? species : undefined,
+    // One transaction, as when type lived on person: a pet whose person_pet write failed would surface as a human.
+    const created = await this.db.transaction().execute(async (trx) => {
+      const row = await trx.insertInto('person').values(person).returningAll().executeTakeFirstOrThrow();
+      await writePersonSidecars(trx, row.personGroupId, {
+        identityId: identityId ?? undefined,
+        type: type === 'pet' ? type : undefined,
+        species: type === 'pet' ? species : undefined,
+      });
+      return row;
     });
     return { ...created, identityId, type, species: type === 'pet' ? species : null };
   }
