@@ -1,5 +1,6 @@
 import { Kysely, sql } from 'kysely';
 import { AssetFileType, AssetVisibility, SharedSpaceRole, SourceType } from 'src/enum.js';
+import { personType } from 'src/gallery/person-sidecar.js';
 import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
 import { FaceIdentityRepository } from 'src/repositories/face-identity.repository.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
@@ -1537,7 +1538,7 @@ describe(PersonRepository.name, () => {
 
       const people = await ctx.database
         .selectFrom('person')
-        .select(['personGroupId', 'type'])
+        .select(['personGroupId', personType().as('type')])
         .where('ownerId', '=', user.id)
         .execute();
       const faces = await ctx.database

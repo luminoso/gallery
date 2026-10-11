@@ -2,7 +2,7 @@ import { Kysely } from 'kysely';
 import { SystemConfig } from 'src/dtos/config.dto.js';
 import { AssetFileType, AssetVisibility, JobName, JobStatus, SharedSpaceRole, SystemMetadataKey } from 'src/enum.js';
 import { FaceSearchRepository } from 'src/gallery/face-search.repository.js';
-import { personIdentityId, personSidecarColumns } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personSidecarColumns, personSpecies } from 'src/gallery/person-sidecar.js';
 import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
 import { AssetJobRepository } from 'src/repositories/asset-job.repository.js';
 import { AssetRepository } from 'src/repositories/asset.repository.js';
@@ -194,7 +194,7 @@ describe('PetRecognitionService.handlePetRecognition (medium)', () => {
 
     const people = await ctx.database
       .selectFrom('person')
-      .select(['personGroupId', 'species'])
+      .select(['personGroupId', personSpecies().as('species')])
       .where(
         'personGroupId',
         'in',

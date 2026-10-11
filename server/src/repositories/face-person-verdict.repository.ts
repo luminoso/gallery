@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Expression, ExpressionBuilder, Kysely, SelectQueryBuilder, SqlBool, Transaction, sql } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
-import { personIdentityId } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personIsPet } from 'src/gallery/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { FacePersonVerdictSource } from 'src/schema/tables/face-person-verdict.table.js';
 import { reviewableAssetVisibility } from 'src/utils/face-review.js';
@@ -655,7 +655,7 @@ export class FacePersonVerdictRepository {
       .where('person.personGroupId', '=', personGroupId)
       .where(sql`BTRIM("person"."name")`, '<>', '')
       .where('person.isHidden', '=', false)
-      .where('person.type', '=', 'person')
+      .where((eb) => eb.not(personIsPet()))
       .executeTakeFirst();
     if (!scannable) {
       return { total: 0, items: [] };

@@ -5,6 +5,7 @@ import type { SyncAck } from 'src/types.js';
 import { columns } from 'src/database.js';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
 import { MemoryType } from 'src/enum.js';
+import { personIsPet } from 'src/gallery/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { asUuid, petFacePredicate } from 'src/utils/database.js';
 import { favoriteExistsFor } from 'src/utils/favorite.js';
@@ -473,7 +474,7 @@ class PersonSync extends BaseSync {
         'faceAssetId',
       ])
       .where('ownerId', '=', options.userId)
-      .$if(!withPets, (qb) => qb.where('type', '!=', 'pet'))
+      .$if(!withPets, (qb) => qb.where((eb) => eb.not(personIsPet())))
       .stream();
   }
 }

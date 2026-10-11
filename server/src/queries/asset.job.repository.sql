@@ -478,9 +478,9 @@ select
                 1 as "one"
               from
                 "person"
+                inner join "person_pet" on "person_pet"."personGroupId" = "person"."personGroupId"
               where
                 "person"."personGroupId" = "asset_face"."personGroupId"
-                and "person"."type" = $1
             )
           ) as "isPet"
         from
@@ -513,7 +513,7 @@ from
   "asset"
   inner join "asset_exif" on "asset"."id" = "asset_exif"."assetId"
 where
-  "asset"."id" = $2
+  "asset"."id" = $1
 
 -- AssetJobRepository.getForOcr
 select

@@ -18,8 +18,12 @@ import {
   PersonSidecarFields,
   clearOrphanPersonIdentity,
   personIdentityId,
+  personIsPet,
   personSidecarColumns,
+  personSpecies,
+  personType,
   setPersonIdentity,
+  writePersonSidecars,
 } from 'src/gallery/person-sidecar.js';
 import { type YearMonthDay } from 'src/repositories/asset.repository.js';
 import { DB } from 'src/schema/index.js';
@@ -279,7 +283,15 @@ export class PersonRepository {
   ): Promise<{ deletedThumbnailPath: string | null; targetNeedsFeatureFaceRepair: boolean }> {
     const people = await db
       .selectFrom('person')
-      .select(['personGroupId', 'name', 'birthDate', 'thumbnailPath', 'color', 'species', 'faceAssetId'])
+      .select([
+        'personGroupId',
+        'name',
+        'birthDate',
+        'thumbnailPath',
+        'color',
+        personSpecies().as('species'),
+        'faceAssetId',
+      ])
       .where('personGroupId', 'in', [input.sourcePersonId, input.targetPersonId])
       .execute();
     const target = people.find((person) => person.personGroupId === input.targetPersonId);
@@ -304,7 +316,8 @@ export class PersonRepository {
     }
 
     if (isBlank(target.species) && !isBlank(source.species)) {
-      update.species = source.species;
+      // only lands when the survivor is a pet: species lives on its person_pet row
+      await writePersonSidecars(db, input.targetPersonId, { species: source.species });
     }
 
     await db.updateTable('person').set(update).where('personGroupId', '=', input.targetPersonId).execute();
@@ -459,8 +472,9 @@ export class PersonRepository {
 
     await db
       .insertInto('person')
-      .values({ ownerId: input.ownerId, personGroupId: group.id, name: input.name, type: input.type })
+      .values({ ownerId: input.ownerId, personGroupId: group.id, name: input.name })
       .execute();
+    await writePersonSidecars(db, group.id, { type: input.type });
 
     return { personGroupId: group.id };
   }
@@ -680,7 +694,7 @@ export class PersonRepository {
       .select(['personGroupId', 'name', 'birthDate'])
       .where('ownerId', '=', ownerId)
       .where('isHidden', '=', false)
-      .where('type', '=', 'person')
+      .where((eb) => eb.not(personIsPet()))
       .where('name', '!=', '')
       .where('birthDate', 'is not', null)
       .where(sql`extract(month from "birthDate")`, '=', month)
@@ -709,7 +723,7 @@ export class PersonRepository {
       .innerJoin('asset_face', 'asset_face.personGroupId', 'person.personGroupId')
       .innerJoin('asset', 'asset.id', 'asset_face.assetId')
       .where('person.ownerId', '=', ownerId)
-      .where('person.type', '=', 'person')
+      .where((eb) => eb.not(personIsPet()))
       .where('person.name', '!=', '')
       .where('person.isHidden', '=', false)
       .where('asset_face.deletedAt', 'is', null)
@@ -772,7 +786,7 @@ export class PersonRepository {
           // photographed once still becomes its own individual), and the Pets view is where you go
           // to name those. The unfiltered view keeps the threshold, so it behaves exactly as before.
           // Grouping is by person.id (the PK), so person.type is functionally dependent here.
-          ...(options?.type === 'pet' ? [eb('person.type', '=', sql.lit('pet'))] : []),
+          ...(options?.type === 'pet' ? [personIsPet()] : []),
           eb(
             (innerEb) => innerEb.fn.count('asset_face.assetId'),
             '>=',
@@ -827,7 +841,7 @@ export class PersonRepository {
           .orderBy('person.personGroupId'),
       )
       .$if(!options?.withHidden, (qb) => qb.where('person.isHidden', '=', false))
-      .$if(!!options?.type, (qb) => qb.where('person.type', '=', options!.type!))
+      .$if(!!options?.type, (qb) => qb.where(personType(), '=', options!.type!))
       // "Pets" means the individuals pet recognition identified, not the per-species buckets the
       // detector alone produces. A bucket has no pet_search row on any of its faces.
       .$if(options?.type === 'pet', (qb) =>
@@ -1247,7 +1261,7 @@ export class PersonRepository {
           AND "asset"."deletedAt" IS NULL
           AND "asset_face"."deletedAt" IS NULL
           AND "asset_face"."isVisible" = true
-          AND (${typeFilter} = '' OR "person"."type" = ${typeFilter})
+          AND (${typeFilter} = '' OR ${personType()} = ${typeFilter})
           AND (
             ${typeFilter} <> 'pet'
             OR EXISTS (
@@ -1257,9 +1271,9 @@ export class PersonRepository {
             )
           )
         -- see getPeopleOverviewStatistics: group by the composite PRIMARY KEY, not the unique index
-        GROUP BY "person"."ownerId", "person"."personGroupId", "person"."type"
+        GROUP BY "person"."ownerId", "person"."personGroupId"
         HAVING NULLIF(BTRIM("person"."name"), '') IS NOT NULL
-          OR (${typeFilter} = 'pet' AND "person"."type" = 'pet')
+          OR (${typeFilter} = 'pet' AND ${personIsPet()})
           OR COUNT("asset_face"."assetId") >= ${minimumFaceCount}
       )
       SELECT
@@ -1393,12 +1407,19 @@ export class PersonRepository {
     };
   }
 
-  async create({ identityId = null, ...person }: Insertable<PersonTable> & PersonSidecarFields) {
+  async create({
+    identityId = null,
+    type = 'person',
+    species = null,
+    ...person
+  }: Insertable<PersonTable> & PersonSidecarFields) {
     const created = await this.db.insertInto('person').values(person).returningAll().executeTakeFirstOrThrow();
-    if (identityId) {
-      await setPersonIdentity(this.db, created.personGroupId, identityId);
-    }
-    return { ...created, identityId };
+    await writePersonSidecars(this.db, created.personGroupId, {
+      identityId: identityId ?? undefined,
+      type: type === 'pet' ? type : undefined,
+      species: type === 'pet' ? species : undefined,
+    });
+    return { ...created, identityId, type, species: type === 'pet' ? species : null };
   }
 
   /**
@@ -1681,7 +1702,7 @@ export class PersonRepository {
       .select(['person.personGroupId', 'person.ownerId'])
       .where(sql`BTRIM("person"."name")`, '<>', '')
       .where('person.isHidden', '=', false)
-      .where('person.type', '=', 'person')
+      .where((eb) => eb.not(personIsPet()))
       .where((eb) =>
         eb.exists(
           eb

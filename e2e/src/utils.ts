@@ -700,9 +700,12 @@ export const utils = {
        INSERT INTO "person_group" ("clusterGroupId")
        SELECT "clusterGroupId" FROM "user" WHERE "id" = $1
        RETURNING id
+       ), new_pet AS (
+       INSERT INTO "person_pet" ("personGroupId", "species")
+       SELECT new_group.id, $2 FROM new_group
        )
-       INSERT INTO "person" ("ownerId", "personGroupId", "type", "species", "name", "thumbnailPath")
-       SELECT $1, new_group.id, 'pet', $2, $3, '/my/awesome/thumbnail.jpg' FROM new_group
+       INSERT INTO "person" ("ownerId", "personGroupId", "name", "thumbnailPath")
+       SELECT $1, new_group.id, $3, '/my/awesome/thumbnail.jpg' FROM new_group
        RETURNING "personGroupId" AS id`,
       [ownerId, species, name ?? species],
     );

@@ -1,7 +1,7 @@
 import { Kysely } from 'kysely';
 import { randomUUID } from 'node:crypto';
 import { AssetVisibility, SharedSpaceRole } from 'src/enum.js';
-import { personIdentityId, personSidecarColumns } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personSidecarColumns, personType } from 'src/gallery/person-sidecar.js';
 import {
   FaceIdentityRepository,
   type SharedSpaceFaceMatchBackfillTarget,
@@ -424,7 +424,7 @@ describe(FaceIdentityRepository.name, () => {
 
     const reconciled = await ctx.database
       .selectFrom('person')
-      .select([personIdentityId().as('identityId'), 'type'])
+      .select([personIdentityId().as('identityId'), personType().as('type')])
       .where('personGroupId', '=', petProfile.personGroupId)
       .executeTakeFirstOrThrow();
     expect(reconciled.identityId).toBe(targetIdentity.id);

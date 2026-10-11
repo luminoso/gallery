@@ -2011,8 +2011,26 @@ select
   "shared_space_member"."role",
   "person"."name",
   "person"."birthDate",
-  "person"."type",
-  "person"."species",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species",
   "person"."updatedAt",
   count("shared_space_person"."id") as "supportingFaceCount",
   person."ownerId" = any ($1::uuid[]) as "isAssetAdder"
@@ -2036,8 +2054,6 @@ group by
   "shared_space_member"."role",
   "person"."name",
   "person"."birthDate",
-  "person"."type",
-  "person"."species",
   "person"."updatedAt",
   "isAssetAdder"
 select
@@ -2162,7 +2178,18 @@ limit
 -- SharedSpaceRepository.getIdentityEvidenceForSpacePerson
 select
   "person_identity"."identityId",
-  "person"."type",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
   count("asset_face"."id") as "supportingFaceCount"
 from
   "shared_space_person_face"
@@ -2225,7 +2252,18 @@ where
   and "asset"."visibility" = 'timeline'
 group by
   "person_identity"."identityId",
-  "person"."type"
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  )
 
 -- SharedSpaceRepository.updatePerson
 update "shared_space_person"
@@ -2974,7 +3012,18 @@ select
   "asset_face"."assetId",
   "asset_face"."personGroupId" as "personId",
   "face_identity_face"."identityId",
-  "person"."type",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
   "face_search"."embedding"
 from
   "asset_face"
@@ -3371,14 +3420,31 @@ select
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
   ) as "identityId",
-  "person"."type"
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type"
 from
   "asset_face"
   inner join "person" on "person"."personGroupId" = "asset_face"."personGroupId"
 where
   "asset_face"."assetId" = $1
   and "asset_face"."deletedAt" is null
-  and "person"."type" = $2
+  and EXISTS (
+    SELECT
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  )
 
 -- SharedSpaceRepository.findSpacePersonByLinkedPersonId
 select

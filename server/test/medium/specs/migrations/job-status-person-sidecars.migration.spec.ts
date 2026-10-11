@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { DB } from 'src/schema/index.js';
 import * as jobStatus from 'src/schema/migrations-gallery/1798500000000-AddAssetJobStatusGalleryTable.js';
 import * as personIdentity from 'src/schema/migrations-gallery/1798600000000-AddPersonIdentityTable.js';
+import * as personPet from 'src/schema/migrations-gallery/1798700000000-AddPersonPetTable.js';
 import { SyncTestContext } from 'test/medium.factory.js';
 import { getKyselyDB } from 'test/utils.js';
 
@@ -89,6 +90,44 @@ describe('1798600000000-AddPersonIdentityTable', () => {
     ).resolves.toEqual([{ personGroupId: linked.personGroupId, ownerId: user.id, identityId: identity.id }]);
     await expect(
       raw(sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'person' AND column_name = 'identityId'`),
+    ).resolves.toEqual([]);
+  });
+});
+
+describe('1798700000000-AddPersonPetTable', () => {
+  it('round-trips pets through person."type" and person."species"', async () => {
+    const ctx = new SyncTestContext(db);
+    const { user } = await ctx.newUser();
+    const { person: dog } = await ctx.newPerson({ ownerId: user.id, type: 'pet', species: 'dog' });
+    const { person: unnamedSpecies } = await ctx.newPerson({ ownerId: user.id, type: 'pet' });
+    const { person: human } = await ctx.newPerson({ ownerId: user.id });
+    const ids = [dog.personGroupId, unnamedSpecies.personGroupId, human.personGroupId];
+
+    await personPet.down(db);
+    await expect(
+      raw(
+        sql`SELECT "personGroupId", type, species FROM person WHERE "personGroupId" IN (${ids[0]}, ${ids[1]}, ${ids[2]}) ORDER BY type DESC, species NULLS LAST`,
+      ),
+    ).resolves.toEqual([
+      { personGroupId: dog.personGroupId, type: 'pet', species: 'dog' },
+      { personGroupId: unnamedSpecies.personGroupId, type: 'pet', species: null },
+      { personGroupId: human.personGroupId, type: 'person', species: null },
+    ]);
+    await expect(raw(sql`SELECT to_regclass('person_pet') AS t`)).resolves.toEqual([{ t: null }]);
+
+    await personPet.up(db);
+    await expect(
+      raw(
+        sql`SELECT "personGroupId", species FROM person_pet WHERE "personGroupId" IN (${ids[0]}, ${ids[1]}, ${ids[2]}) ORDER BY species NULLS LAST`,
+      ),
+    ).resolves.toEqual([
+      { personGroupId: dog.personGroupId, species: 'dog' },
+      { personGroupId: unnamedSpecies.personGroupId, species: null },
+    ]);
+    await expect(
+      raw(
+        sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'person' AND column_name IN ('type', 'species')`,
+      ),
     ).resolves.toEqual([]);
   });
 });

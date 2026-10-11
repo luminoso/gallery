@@ -1495,9 +1495,9 @@ export const petFacePredicate = (eb: ExpressionBuilder<DB, 'asset_face'>) =>
     eb.exists(
       eb
         .selectFrom('person')
+        .innerJoin('person_pet', 'person_pet.personGroupId', 'person.personGroupId')
         .select(sql`1`.as('one'))
-        .whereRef('person.personGroupId', '=', 'asset_face.personGroupId')
-        .where('person.type', '=', 'pet'),
+        .whereRef('person.personGroupId', '=', 'asset_face.personGroupId'),
     ),
   ]);
 

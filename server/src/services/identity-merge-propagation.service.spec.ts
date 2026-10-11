@@ -186,7 +186,8 @@ class PersonalMergeUpdateBuilder {
   }
 
   execute() {
-    if (this.table === 'person' && this.whereColumn === 'personGroupId') {
+    // person_pet (species) is modelled as a field on the fake person row, like identityId.
+    if ((this.table === 'person' || this.table === 'person_pet') && this.whereColumn === 'personGroupId') {
       for (const person of this.db.people) {
         if (person.personGroupId === this.whereValue) {
           Object.assign(person, this.update);

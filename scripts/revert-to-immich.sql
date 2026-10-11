@@ -121,18 +121,21 @@ END $$;
 -- -----------------------------------------------------------------------------
 
 -- Pets. Gallery stores them as upstream person/asset_face rows told apart only
--- by person.type (dropped in section 4) and pet_search (dropped in section 2),
--- so without this they come back as people. asset_face."personGroupId" is
--- ON DELETE SET NULL, so the faces must go explicitly; deleting the
--- person_group then cascades to person. pet_search holds the faces that pet
--- recognition has not assigned to anyone yet.
+-- by person_pet (person.type on databases from before it; both go in sections 2
+-- and 4) and pet_search (dropped in section 2), so without this they come back
+-- as people. asset_face."personGroupId" is ON DELETE SET NULL, so the faces
+-- must go explicitly; deleting the person_group then cascades to person.
+-- pet_search holds the faces that pet recognition has not assigned to anyone yet.
 DO $$
 BEGIN
   IF to_regclass('public.pet_search') IS NOT NULL THEN
     DELETE FROM "asset_face" WHERE "id" IN (SELECT "faceId" FROM "pet_search");
   END IF;
-  IF EXISTS (SELECT FROM information_schema.columns
-              WHERE table_schema = 'public' AND table_name = 'person' AND column_name = 'type') THEN
+  IF to_regclass('public.person_pet') IS NOT NULL THEN
+    DELETE FROM "asset_face" WHERE "personGroupId" IN (SELECT "personGroupId" FROM "person_pet");
+    DELETE FROM "person_group" WHERE "id" IN (SELECT "personGroupId" FROM "person_pet");
+  ELSIF EXISTS (SELECT FROM information_schema.columns
+                 WHERE table_schema = 'public' AND table_name = 'person' AND column_name = 'type') THEN
     DELETE FROM "asset_face"
      WHERE "personGroupId" IN (SELECT "personGroupId" FROM "person" WHERE "type" = 'pet');
     DELETE FROM "person_group"
@@ -344,6 +347,7 @@ DROP TABLE IF EXISTS "shared_space" CASCADE;
 
 -- Face identities
 DROP TABLE IF EXISTS "person_identity" CASCADE;
+DROP TABLE IF EXISTS "person_pet" CASCADE;
 DROP TABLE IF EXISTS "face_repair_scan_flagged_face" CASCADE;
 DROP TABLE IF EXISTS "face_repair_decline" CASCADE;
 DROP TABLE IF EXISTS "face_repair_lock" CASCADE;
@@ -415,6 +419,7 @@ DROP FUNCTION IF EXISTS asset_favorite_delete_audit() CASCADE;
 -- Indexes on these columns would go with them; they are dropped by name anyway
 -- so revert-to-immich.spec.ts can check every fork index is covered.
 -- -----------------------------------------------------------------------------
+-- Databases from before the person_pet and asset_job_status_gallery sidecars.
 ALTER TABLE "person"            DROP COLUMN IF EXISTS "type";
 ALTER TABLE "person"            DROP COLUMN IF EXISTS "species";
 ALTER TABLE "asset_job_status"  DROP COLUMN IF EXISTS "petsDetectedAt";
@@ -756,6 +761,7 @@ DELETE FROM "kysely_migrations"
   '1798200000000-DropLibraryCreateId',
   '1798500000000-AddAssetJobStatusGalleryTable',
   '1798600000000-AddPersonIdentityTable',
+  '1798700000000-AddPersonPetTable',
   -- Pre-rename name, recorded by builds from before the ledger split: this migration was
   -- renumbered off 1793000000000 when fork PR #1060 took that timestamp, but rolling RC instances
   -- had already recorded the pre-rename name. Drop that row too, or upstream's migrator aborts
@@ -866,6 +872,7 @@ BEGIN
        'asset_favorite_audit', 'asset_favorite',
        'asset_job_status_gallery',
        'person_identity',
+       'person_pet',
        'gallery_migrations', 'gallery_migrations_lock'
      );
   IF fork_tables_left > 0 THEN

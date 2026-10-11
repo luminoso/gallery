@@ -966,16 +966,16 @@ const assetJobStatusInsert = (
  * Option M: `user.clusterGroupId` is a NOT NULL foreign key. `ctx.newUser` mints the group through
  * ClusterGroupRepository; specs that build a user row by hand need the same.
  */
-/** Updates a person row together with its fork sidecar fields (identityId lives in person_identity). */
+/** Updates a person row together with its fork sidecar fields (person_identity, person_pet). */
 export const updatePersonForTest = async (
   db: Kysely<DB>,
   personGroupId: string,
-  { identityId, ...person }: Updateable<PersonTable> & PersonSidecarFields,
+  { identityId, type, species, ...person }: Updateable<PersonTable> & PersonSidecarFields,
 ) => {
   if (Object.values(person).some((value) => value !== undefined)) {
     await db.updateTable('person').set(person).where('personGroupId', '=', personGroupId).execute();
   }
-  await writePersonSidecars(db, personGroupId, { identityId });
+  await writePersonSidecars(db, personGroupId, { identityId, type, species });
 };
 
 export const insertClusterGroup = async (db: Kysely<DB>): Promise<string> => {

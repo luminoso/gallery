@@ -45,12 +45,14 @@ export class PetFaceRepository {
       // ON DELETE SET NULL, so removing the people first would orphan (not delete) the faces.
       await trx
         .deleteFrom('asset_face')
-        .where('asset_face.personGroupId', 'in', (eb) =>
-          eb.selectFrom('person').select('person.personGroupId').where('person.type', '=', 'pet'),
-        )
+        .where('asset_face.personGroupId', 'in', (eb) => eb.selectFrom('person_pet').select('person_pet.personGroupId'))
         .execute();
 
-      await trx.deleteFrom('person').where('person.type', '=', 'pet').execute();
+      await trx
+        .deleteFrom('person')
+        .where('person.personGroupId', 'in', (eb) => eb.selectFrom('person_pet').select('person_pet.personGroupId'))
+        .execute();
+      await trx.deleteFrom('person_pet').execute();
     });
   }
 
@@ -82,8 +84,8 @@ export class PetFaceRepository {
       //    species bucket still holds its (embedding-less) faces after step 1.
       const orphaned = await trx
         .selectFrom('person')
+        .innerJoin('person_pet', 'person_pet.personGroupId', 'person.personGroupId')
         .select(['person.personGroupId', personIdentityId().as('identityId')])
-        .where('person.type', '=', 'pet')
         .where((eb) =>
           eb.not(
             eb.exists(
@@ -249,9 +251,9 @@ export class PetFaceRepository {
       .selectFrom('person')
       .selectAll('person')
       .select(personSidecarColumns())
+      .innerJoin('person_pet', 'person_pet.personGroupId', 'person.personGroupId')
       .where('person.ownerId', '=', ownerId)
-      .where('person.type', '=', 'pet')
-      .where('person.species', '=', species)
+      .where('person_pet.species', '=', species)
       .executeTakeFirst();
   }
 }

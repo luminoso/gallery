@@ -13,7 +13,7 @@ import {
   SourceType,
   VectorIndex,
 } from 'src/enum.js';
-import { personIdentityId } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personIsPet, personSpecies, personType } from 'src/gallery/person-sidecar.js';
 import { probes } from 'src/repositories/database.repository.js';
 import { DB } from 'src/schema/index.js';
 import { SharedSpaceAlbumTable } from 'src/schema/tables/shared-space-album.table.js';
@@ -3196,8 +3196,8 @@ export class SharedSpaceRepository {
         'shared_space_member.role',
         'person.name',
         'person.birthDate',
-        'person.type',
-        'person.species',
+        personType().as('type'),
+        personSpecies().as('species'),
         'person.updatedAt',
       ])
       .select((eb) => [
@@ -3211,8 +3211,6 @@ export class SharedSpaceRepository {
         'shared_space_member.role',
         'person.name',
         'person.birthDate',
-        'person.type',
-        'person.species',
         'person.updatedAt',
         'isAssetAdder',
       ])
@@ -3395,7 +3393,7 @@ export class SharedSpaceRepository {
       .innerJoin('asset', 'asset.id', 'asset_face.assetId')
       .innerJoin('person', 'person.personGroupId', 'asset_face.personGroupId')
       .innerJoin('person_identity', 'person_identity.personGroupId', 'person.personGroupId')
-      .select(['person_identity.identityId', 'person.type'])
+      .select(['person_identity.identityId', personType().as('type')])
       .select((eb) => eb.fn.count('asset_face.id').$castTo<number>().as('supportingFaceCount'))
       .where('shared_space_person_face.personId', '=', spacePersonId)
       .where((eb) =>
@@ -3426,7 +3424,7 @@ export class SharedSpaceRepository {
       .where('asset.deletedAt', 'is', null)
       .where('asset.visibility', '=', sql.lit(AssetVisibility.Timeline))
       .$if(!!candidateIdentityIds?.length, (qb) => qb.where('person_identity.identityId', 'in', candidateIdentityIds!))
-      .groupBy(['person_identity.identityId', 'person.type'])
+      .groupBy(['person_identity.identityId', personType()])
       .$castTo<SpacePersonIdentityEvidence>()
       .execute();
   }
@@ -4507,7 +4505,7 @@ export class SharedSpaceRepository {
         'asset_face.assetId',
         'asset_face.personGroupId as personId',
         'face_identity_face.identityId',
-        'person.type',
+        personType().as('type'),
         'face_search.embedding',
       ])
       .where('asset_face.assetId', '=', assetId)
@@ -4929,11 +4927,11 @@ export class SharedSpaceRepository {
         'asset_face.assetId',
         'asset_face.personGroupId as personId',
         personIdentityId().as('identityId'),
-        'person.type',
+        personType().as('type'),
       ])
       .where('asset_face.assetId', '=', assetId)
       .where('asset_face.deletedAt', 'is', null)
-      .where('person.type', '=', 'pet')
+      .where(personIsPet())
       .execute();
   }
 

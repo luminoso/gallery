@@ -141,19 +141,25 @@ from
 where
   "ownerId" = $1
   and "isHidden" = $2
-  and "type" = $3
-  and "name" != $4
+  and not EXISTS (
+    SELECT
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  )
+  and "name" != $3
   and "birthDate" is not null
   and extract(
     month
     from
       "birthDate"
-  ) = $5
+  ) = $4
   and extract(
     day
     from
       "birthDate"
-  ) = $6
+  ) = $5
 
 -- PersonRepository.getDormantPeople
 select
@@ -165,13 +171,19 @@ from
   inner join "asset" on "asset"."id" = "asset_face"."assetId"
 where
   "person"."ownerId" = $1
-  and "person"."type" = $2
-  and "person"."name" != $3
-  and "person"."isHidden" = $4
+  and not EXISTS (
+    SELECT
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  )
+  and "person"."name" != $2
+  and "person"."isHidden" = $3
   and "asset_face"."deletedAt" is null
-  and "asset_face"."isVisible" = $5
-  and "asset"."ownerId" = $6
-  and "asset"."visibility" = $7
+  and "asset_face"."isVisible" = $4
+  and "asset"."ownerId" = $5
+  and "asset"."visibility" = $6
   and "asset"."deletedAt" is null
   and exists (
     select
@@ -180,19 +192,19 @@ where
       "asset_file"
     where
       "asset_file"."assetId" = "asset"."id"
-      and "asset_file"."type" = $8
+      and "asset_file"."type" = $7
   )
 group by
   "person"."personGroupId",
   "person"."name"
 having
-  max("asset"."localDateTime") < $9
-  and count(distinct ("asset"."id")) >= $10
+  max("asset"."localDateTime") < $8
+  and count(distinct ("asset"."id")) >= $9
 order by
   count(distinct ("asset"."id")) desc,
   "person"."personGroupId" asc
 limit
-  $11
+  $10
 
 -- PersonRepository.getFileSamples
 select
@@ -216,7 +228,27 @@ select
       "person_identity"
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
-  ) as "identityId"
+  ) as "identityId",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species"
 from
   "person"
   inner join "asset_face" on "asset_face"."personGroupId" = "person"."personGroupId"
@@ -272,7 +304,27 @@ select
       "person_identity"
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
-  ) as "identityId"
+  ) as "identityId",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species"
 from
   "person"
   left join "asset_face" on "asset_face"."personGroupId" = "person"."personGroupId"
@@ -304,7 +356,27 @@ select
               "person_identity"
             WHERE
               "person_identity"."personGroupId" = "person"."personGroupId"
-          ) as "identityId"
+          ) as "identityId",
+          (
+            CASE
+              WHEN EXISTS (
+                SELECT
+                FROM
+                  "person_pet"
+                WHERE
+                  "person_pet"."personGroupId" = "person"."personGroupId"
+              ) THEN 'pet'
+              ELSE 'person'
+            END
+          ) as "type",
+          (
+            SELECT
+              "person_pet"."species"
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) as "species"
         from
           "person"
         where
@@ -344,7 +416,27 @@ select
               "person_identity"
             WHERE
               "person_identity"."personGroupId" = "person"."personGroupId"
-          ) as "identityId"
+          ) as "identityId",
+          (
+            CASE
+              WHEN EXISTS (
+                SELECT
+                FROM
+                  "person_pet"
+                WHERE
+                  "person_pet"."personGroupId" = "person"."personGroupId"
+              ) THEN 'pet'
+              ELSE 'person'
+            END
+          ) as "type",
+          (
+            SELECT
+              "person_pet"."species"
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) as "species"
         from
           "person"
         where
@@ -381,7 +473,27 @@ select
               "person_identity"
             WHERE
               "person_identity"."personGroupId" = "person"."personGroupId"
-          ) as "identityId"
+          ) as "identityId",
+          (
+            CASE
+              WHEN EXISTS (
+                SELECT
+                FROM
+                  "person_pet"
+                WHERE
+                  "person_pet"."personGroupId" = "person"."personGroupId"
+              ) THEN 'pet'
+              ELSE 'person'
+            END
+          ) as "type",
+          (
+            SELECT
+              "person_pet"."species"
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) as "species"
         from
           "person"
         where
@@ -412,7 +524,27 @@ select
               "person_identity"
             WHERE
               "person_identity"."personGroupId" = "person"."personGroupId"
-          ) as "identityId"
+          ) as "identityId",
+          (
+            CASE
+              WHEN EXISTS (
+                SELECT
+                FROM
+                  "person_pet"
+                WHERE
+                  "person_pet"."personGroupId" = "person"."personGroupId"
+              ) THEN 'pet'
+              ELSE 'person'
+            END
+          ) as "type",
+          (
+            SELECT
+              "person_pet"."species"
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) as "species"
         from
           "person"
         where
@@ -625,7 +757,27 @@ select
       "person_identity"
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
-  ) as "identityId"
+  ) as "identityId",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species"
 from
   "person"
 where
@@ -642,7 +794,27 @@ select
       "person_identity"
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
-  ) as "identityId"
+  ) as "identityId",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species"
 from
   "person"
 where
@@ -663,7 +835,27 @@ select
       "person_identity"
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
-  ) as "identityId"
+  ) as "identityId",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species"
 from
   "similarity_threshold",
   "person"
@@ -843,7 +1035,18 @@ WITH
       AND "asset_face"."isVisible" = true
       AND (
         $3 = ''
-        OR "person"."type" = $4
+        OR (
+          CASE
+            WHEN EXISTS (
+              SELECT
+              FROM
+                "person_pet"
+              WHERE
+                "person_pet"."personGroupId" = "person"."personGroupId"
+            ) THEN 'pet'
+            ELSE 'person'
+          END
+        ) = $4
       )
       AND (
         $5 <> 'pet'
@@ -860,13 +1063,18 @@ WITH
       -- see getPeopleOverviewStatistics: group by the composite PRIMARY KEY, not the unique index
     GROUP BY
       "person"."ownerId",
-      "person"."personGroupId",
-      "person"."type"
+      "person"."personGroupId"
     HAVING
       NULLIF(BTRIM("person"."name"), '') IS NOT NULL
       OR (
         $6 = 'pet'
-        AND "person"."type" = 'pet'
+        AND EXISTS (
+          SELECT
+          FROM
+            "person_pet"
+          WHERE
+            "person_pet"."personGroupId" = "person"."personGroupId"
+        )
       )
       OR COUNT("asset_face"."assetId") >= $7
   )
@@ -1202,7 +1410,27 @@ select
               "person_identity"
             WHERE
               "person_identity"."personGroupId" = "person"."personGroupId"
-          ) as "identityId"
+          ) as "identityId",
+          (
+            CASE
+              WHEN EXISTS (
+                SELECT
+                FROM
+                  "person_pet"
+                WHERE
+                  "person_pet"."personGroupId" = "person"."personGroupId"
+              ) THEN 'pet'
+              ELSE 'person'
+            END
+          ) as "type",
+          (
+            SELECT
+              "person_pet"."species"
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) as "species"
         from
           "person"
         where
@@ -1288,7 +1516,27 @@ select
       "person_identity"
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
-  ) as "identityId"
+  ) as "identityId",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
+  (
+    SELECT
+      "person_pet"."species"
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  ) as "species"
 from
   "person"
 where

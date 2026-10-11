@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Kysely, sql } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { AssetVisibility } from 'src/enum.js';
+import { personIsPet } from 'src/gallery/person-sidecar.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { DB } from 'src/schema/index.js';
 
@@ -90,7 +91,7 @@ export class ClassificationRepository {
       .where('asset_face.deletedAt', 'is', null)
       .where('asset_face.isVisible', 'is', true)
       .where('asset_face.personGroupId', 'is not', null)
-      .where('person.type', '=', 'person')
+      .where((eb) => eb.not(personIsPet()))
       .executeTakeFirst();
 
     return {

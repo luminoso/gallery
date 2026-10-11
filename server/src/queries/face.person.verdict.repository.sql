@@ -361,7 +361,13 @@ where
   "person"."personGroupId" = $1
   and BTRIM("person"."name") <> $2
   and "person"."isHidden" = $3
-  and "person"."type" = $4
+  and not EXISTS (
+    SELECT
+    FROM
+      "person_pet"
+    WHERE
+      "person_pet"."personGroupId" = "person"."personGroupId"
+  )
 
 -- FacePersonVerdictRepository.getPendingForSpacePerson
 select

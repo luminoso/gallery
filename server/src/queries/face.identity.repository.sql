@@ -163,7 +163,18 @@ WITH
       person."isFavorite",
       person."updatedAt",
       person."personGroupId" AS "profileId",
-      person.type,
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type,
       0 AS "profileRank"
     FROM
       person
@@ -194,7 +205,18 @@ WITH
       )
       AND (
         $5 = ''
-        OR person.type = $6
+        OR (
+          CASE
+            WHEN EXISTS (
+              SELECT
+              FROM
+                "person_pet"
+              WHERE
+                "person_pet"."personGroupId" = "person"."personGroupId"
+            ) THEN 'pet'
+            ELSE 'person'
+          END
+        ) = $6
       )
       AND (
         $7 <> 'pet'
@@ -442,7 +464,18 @@ WITH
       person."isFavorite",
       person."updatedAt",
       person."personGroupId" AS "profileId",
-      person.type,
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type,
       0 AS "profileRank"
     FROM
       person
@@ -473,7 +506,18 @@ WITH
       )
       AND (
         $5 = ''
-        OR person.type = $6
+        OR (
+          CASE
+            WHEN EXISTS (
+              SELECT
+              FROM
+                "person_pet"
+              WHERE
+                "person_pet"."personGroupId" = "person"."personGroupId"
+            ) THEN 'pet'
+            ELSE 'person'
+          END
+        ) = $6
       )
       AND (
         $7 <> 'pet'
@@ -727,7 +771,18 @@ WITH
       ) AS "identityId",
       person."isHidden",
       person.name,
-      person.type
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type
     FROM
       person
     WHERE
@@ -901,7 +956,18 @@ WITH
       ) AS "identityId",
       person."isHidden",
       person.name,
-      person.type
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type
     FROM
       person
     WHERE
@@ -1231,7 +1297,18 @@ WITH
       person."isFavorite",
       person."updatedAt",
       person."personGroupId" AS "profileId",
-      person.type,
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type,
       0 AS "profileRank"
     FROM
       person
@@ -1262,7 +1339,18 @@ WITH
       )
       AND (
         $5 = ''
-        OR person.type = $6
+        OR (
+          CASE
+            WHEN EXISTS (
+              SELECT
+              FROM
+                "person_pet"
+              WHERE
+                "person_pet"."personGroupId" = "person"."personGroupId"
+            ) THEN 'pet'
+            ELSE 'person'
+          END
+        ) = $6
       )
       AND (
         $7 <> 'pet'
@@ -1550,7 +1638,18 @@ WITH
       person."isFavorite",
       person."updatedAt",
       person."personGroupId" AS "profileId",
-      person.type,
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type,
       0 AS "profileRank"
     FROM
       person
@@ -1581,7 +1680,18 @@ WITH
       )
       AND (
         $5 = ''
-        OR person.type = $6
+        OR (
+          CASE
+            WHEN EXISTS (
+              SELECT
+              FROM
+                "person_pet"
+              WHERE
+                "person_pet"."personGroupId" = "person"."personGroupId"
+            ) THEN 'pet'
+            ELSE 'person'
+          END
+        ) = $6
       )
       AND (
         $7 <> 'pet'
@@ -1929,8 +2039,26 @@ WITH
       person."isFavorite",
       person.color,
       person."updatedAt",
-      person.type,
-      person.species,
+      (
+        CASE
+          WHEN EXISTS (
+            SELECT
+            FROM
+              "person_pet"
+            WHERE
+              "person_pet"."personGroupId" = "person"."personGroupId"
+          ) THEN 'pet'
+          ELSE 'person'
+        END
+      ) AS type,
+      (
+        SELECT
+          "person_pet"."species"
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) AS species,
       0 AS "profileRank"
     FROM
       person
@@ -2097,7 +2225,18 @@ select
     WHERE
       "person_identity"."personGroupId" = "person"."personGroupId"
   ) as "identityId",
-  "type",
+  (
+    CASE
+      WHEN EXISTS (
+        SELECT
+        FROM
+          "person_pet"
+        WHERE
+          "person_pet"."personGroupId" = "person"."personGroupId"
+      ) THEN 'pet'
+      ELSE 'person'
+    END
+  ) as "type",
   "faceAssetId"
 from
   "person"
