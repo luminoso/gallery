@@ -1,5 +1,5 @@
 import { Kysely, sql } from 'kysely';
-import { SyncRepository, accessibleLibraries } from 'src/repositories/sync.repository.js';
+import { GallerySyncRepository, accessibleLibraries } from 'src/gallery/sync/gallery-sync.repository.js';
 import { DB } from 'src/schema/index.js';
 import { SyncTestContext } from 'test/medium.factory.js';
 import { getKyselyDB } from 'test/utils.js';
@@ -19,7 +19,7 @@ const NOW_ID = 'ffffffff-ffff-7fff-bfff-ffffffffffff';
 
 const setup = () => {
   const ctx = new SyncTestContext(defaultDatabase);
-  return { ctx, db: defaultDatabase, sut: ctx.get(SyncRepository).library };
+  return { ctx, db: defaultDatabase, sut: new GallerySyncRepository(ctx.database).library };
 };
 
 beforeAll(async () => {

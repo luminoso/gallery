@@ -30,6 +30,7 @@ import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
 import { QueueMaintenanceRepository } from 'src/gallery/queue-maintenance.repository.js';
 import { SmartFacetRepository } from 'src/gallery/smart-facet.repository.js';
 import { SpaceAlbumRepository } from 'src/gallery/space-album.repository.js';
+import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
 import { ActivityRepository } from 'src/repositories/activity.repository.js';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository.js';
@@ -560,6 +561,8 @@ export class SyncTestContext extends MediumTestContext<typeof SyncService> {
       real: [SyncRepository, SyncCheckpointRepository, SessionRepository],
       mock: [LoggingRepository],
     });
+    // SyncService gets the fork streams' repository by property injection, outside the positional deps.
+    this.sut['gallerySyncRepository'] = new GallerySyncRepository(database);
   }
 
   async syncStream(auth: AuthDto, types: SyncRequestType[], shouldReset?: boolean) {

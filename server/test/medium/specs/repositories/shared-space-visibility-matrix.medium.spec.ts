@@ -25,6 +25,7 @@ import { AlbumUserRole, AssetVisibility, TimeBucketSize } from 'src/enum.js';
 import { FaceSearchRepository } from 'src/gallery/face-search.repository.js';
 import { FilterSuggestionRepository } from 'src/gallery/filter-suggestion.repository.js';
 import { SpaceAlbumRepository } from 'src/gallery/space-album.repository.js';
+import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
 import { ActivityRepository } from 'src/repositories/activity.repository.js';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository.js';
@@ -86,7 +87,7 @@ const setup = () => {
     memoryRepo: ctx.get(MemoryRepository),
     suggestionRepo: ctx.get(FilterSuggestionRepository),
     spaceRepo: ctx.get(SharedSpaceRepository),
-    syncRepo: ctx.get(SyncRepository),
+    syncRepo: new GallerySyncRepository(ctx.database),
     tagRepo: ctx.get(TagRepository),
     viewRepo: ctx.get(ViewRepository),
   };

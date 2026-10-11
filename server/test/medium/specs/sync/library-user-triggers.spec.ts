@@ -1,6 +1,6 @@
 import { Kysely, sql } from 'kysely';
 import { SyncEntityType } from 'src/enum.js';
-import { SyncRepository } from 'src/repositories/sync.repository.js';
+import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
 import { DB } from 'src/schema/index.js';
 import { SyncTestContext } from 'test/medium.factory.js';
 import { getKyselyDB } from 'test/utils.js';
@@ -202,7 +202,7 @@ describe('library_user triggers', () => {
 
     it('LibrarySync.getUpserts re-delivers the library to the new member after the updateId bump', async () => {
       const { ctx, db } = setup();
-      const syncRepo = ctx.get(SyncRepository);
+      const syncRepo = new GallerySyncRepository(ctx.database);
       const { user: owner } = await ctx.newUser();
       const { user: newMember } = await ctx.newUser();
       const { library } = await ctx.newLibrary({ ownerId: owner.id });

@@ -20,6 +20,7 @@ import { QueueMaintenanceRepository } from 'src/gallery/queue-maintenance.reposi
 import { SmartFacetRepository } from 'src/gallery/smart-facet.repository.js';
 import { SpaceAlbumRepository } from 'src/gallery/space-album.repository.js';
 import { StorageUsageService } from 'src/gallery/storage-usage.service.js';
+import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
 import { AppMetricsRepository } from 'src/repositories/app-metrics.repository.js';
 import { AssetFavoriteRepository } from 'src/repositories/asset-favorite.repository.js';
 import { ClassificationRepository } from 'src/repositories/classification.repository.js';
@@ -78,6 +79,7 @@ export const galleryRepositories = [
   SpaceAlbumRepository,
   PetFaceRepository,
   FaceSearchRepository,
+  GallerySyncRepository,
 ];
 
 export const galleryServices = [
