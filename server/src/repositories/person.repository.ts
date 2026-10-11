@@ -467,7 +467,12 @@ export class PersonRepository {
       .returning('personGroupId')
       .executeTakeFirst();
     if (!linked) {
-      return (await find()) as { personGroupId: string };
+      // Lost the race: the winner's person row is visible once its transaction commits.
+      const winner = await find();
+      if (!winner) {
+        throw new Error(`Identity ${input.identityId} is linked for owner ${input.ownerId} but has no person row`);
+      }
+      return winner;
     }
 
     await db

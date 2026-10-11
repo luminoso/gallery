@@ -44,7 +44,7 @@ describe('1798500000000-AddAssetJobStatusGalleryTable', () => {
     await jobStatus.down(db);
     await expect(
       raw(
-        sql`SELECT "assetId", "petsDetectedAt", "classifiedAt" FROM asset_job_status WHERE "assetId" IN (${stamped.id}, ${noStatusRow.id}) ORDER BY "classifiedAt" NULLS LAST`,
+        sql`SELECT "assetId", "petsDetectedAt", "classifiedAt" FROM asset_job_status WHERE "assetId" IN (${stamped.id}, ${noStatusRow.id}) ORDER BY array_position(ARRAY[${stamped.id}, ${noStatusRow.id}]::uuid[], "assetId")`,
       ),
     ).resolves.toEqual(expected);
     await expect(raw(sql`SELECT to_regclass('asset_job_status_gallery') AS t`)).resolves.toEqual([{ t: null }]);
@@ -52,7 +52,7 @@ describe('1798500000000-AddAssetJobStatusGalleryTable', () => {
     await jobStatus.up(db);
     await expect(
       raw(
-        sql`SELECT "assetId", "petsDetectedAt", "classifiedAt" FROM asset_job_status_gallery WHERE "assetId" IN (${stamped.id}, ${noStatusRow.id}) ORDER BY "classifiedAt" NULLS LAST`,
+        sql`SELECT "assetId", "petsDetectedAt", "classifiedAt" FROM asset_job_status_gallery WHERE "assetId" IN (${stamped.id}, ${noStatusRow.id}) ORDER BY array_position(ARRAY[${stamped.id}, ${noStatusRow.id}]::uuid[], "assetId")`,
       ),
     ).resolves.toEqual(expected);
     await expect(
@@ -67,14 +67,18 @@ describe('1798600000000-AddPersonIdentityTable', () => {
   it('round-trips the person identity through person."identityId"', async () => {
     const ctx = new SyncTestContext(db);
     const { user } = await ctx.newUser();
-    const identity = await db.insertInto('face_identity').values({ type: 'person' }).returning('id').executeTakeFirstOrThrow();
+    const identity = await db
+      .insertInto('face_identity')
+      .values({ type: 'person' })
+      .returning('id')
+      .executeTakeFirstOrThrow();
     const { person: linked } = await ctx.newPerson({ ownerId: user.id, identityId: identity.id });
     const { person: unlinked } = await ctx.newPerson({ ownerId: user.id });
 
     await personIdentity.down(db);
     await expect(
       raw(
-        sql`SELECT "personGroupId", "identityId" FROM person WHERE "personGroupId" IN (${linked.personGroupId}, ${unlinked.personGroupId}) ORDER BY "identityId" NULLS LAST`,
+        sql`SELECT "personGroupId", "identityId" FROM person WHERE "personGroupId" IN (${linked.personGroupId}, ${unlinked.personGroupId}) ORDER BY array_position(ARRAY[${linked.personGroupId}, ${unlinked.personGroupId}]::uuid[], "personGroupId")`,
       ),
     ).resolves.toEqual([
       { personGroupId: linked.personGroupId, identityId: identity.id },
@@ -89,7 +93,9 @@ describe('1798600000000-AddPersonIdentityTable', () => {
       ),
     ).resolves.toEqual([{ personGroupId: linked.personGroupId, ownerId: user.id, identityId: identity.id }]);
     await expect(
-      raw(sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'person' AND column_name = 'identityId'`),
+      raw(
+        sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'person' AND column_name = 'identityId'`,
+      ),
     ).resolves.toEqual([]);
   });
 });
@@ -106,7 +112,7 @@ describe('1798700000000-AddPersonPetTable', () => {
     await personPet.down(db);
     await expect(
       raw(
-        sql`SELECT "personGroupId", type, species FROM person WHERE "personGroupId" IN (${ids[0]}, ${ids[1]}, ${ids[2]}) ORDER BY type DESC, species NULLS LAST`,
+        sql`SELECT "personGroupId", type, species FROM person WHERE "personGroupId" IN (${ids[0]}, ${ids[1]}, ${ids[2]}) ORDER BY array_position(ARRAY[${ids[0]}, ${ids[1]}, ${ids[2]}]::uuid[], "personGroupId")`,
       ),
     ).resolves.toEqual([
       { personGroupId: dog.personGroupId, type: 'pet', species: 'dog' },
@@ -118,7 +124,7 @@ describe('1798700000000-AddPersonPetTable', () => {
     await personPet.up(db);
     await expect(
       raw(
-        sql`SELECT "personGroupId", species FROM person_pet WHERE "personGroupId" IN (${ids[0]}, ${ids[1]}, ${ids[2]}) ORDER BY species NULLS LAST`,
+        sql`SELECT "personGroupId", species FROM person_pet WHERE "personGroupId" IN (${ids[0]}, ${ids[1]}, ${ids[2]}) ORDER BY array_position(ARRAY[${ids[0]}, ${ids[1]}, ${ids[2]}]::uuid[], "personGroupId")`,
       ),
     ).resolves.toEqual([
       { personGroupId: dog.personGroupId, species: 'dog' },

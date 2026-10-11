@@ -26,12 +26,21 @@ describe('1798000000000-AddSharedLinkSpaceTable', () => {
     const ctx = new SyncTestContext(db);
     const { user } = await ctx.newUser();
     const { space } = await ctx.newSharedSpace({ createdById: user.id });
-    const { sharedLink } = await ctx.newSharedLink({ userId: user.id, type: SharedLinkType.Individual, spaceId: space.id });
+    const { sharedLink } = await ctx.newSharedLink({
+      userId: user.id,
+      type: SharedLinkType.Individual,
+      spaceId: space.id,
+    });
     const { sharedLink: plainLink } = await ctx.newSharedLink({ userId: user.id, type: SharedLinkType.Individual });
 
     await sharedLinkSpace.down(db);
     await expect(
-      raw(sql<{ id: string; spaceId: string | null }>`SELECT id, "spaceId" FROM shared_link WHERE id IN (${sharedLink.id}, ${plainLink.id}) ORDER BY "spaceId" NULLS LAST`),
+      raw(
+        sql<{
+          id: string;
+          spaceId: string | null;
+        }>`SELECT id, "spaceId" FROM shared_link WHERE id IN (${sharedLink.id}, ${plainLink.id}) ORDER BY array_position(ARRAY[${sharedLink.id}, ${plainLink.id}]::uuid[], id)`,
+      ),
     ).resolves.toEqual([
       { id: sharedLink.id, spaceId: space.id },
       { id: plainLink.id, spaceId: null },
@@ -43,7 +52,9 @@ describe('1798000000000-AddSharedLinkSpaceTable', () => {
       { sharedLinkId: sharedLink.id, spaceId: space.id },
     ]);
     await expect(
-      raw(sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'shared_link' AND column_name = 'spaceId'`),
+      raw(
+        sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'shared_link' AND column_name = 'spaceId'`,
+      ),
     ).resolves.toEqual([]);
   });
 });
@@ -58,7 +69,12 @@ describe('1798100000000-AddAssetFaceCreatorTable', () => {
 
     await assetFaceCreator.down(db);
     await expect(
-      raw(sql<{ id: string; createdBy: string | null }>`SELECT id, "createdBy" FROM asset_face WHERE id IN (${drawn}, ${detected}) ORDER BY "createdBy" NULLS LAST`),
+      raw(
+        sql<{
+          id: string;
+          createdBy: string | null;
+        }>`SELECT id, "createdBy" FROM asset_face WHERE id IN (${drawn}, ${detected}) ORDER BY array_position(ARRAY[${drawn}, ${detected}]::uuid[], id)`,
+      ),
     ).resolves.toEqual([
       { id: drawn, createdBy: user.id },
       { id: detected, createdBy: null },
@@ -69,7 +85,9 @@ describe('1798100000000-AddAssetFaceCreatorTable', () => {
       { assetFaceId: drawn, userId: user.id },
     ]);
     await expect(
-      raw(sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'asset_face' AND column_name = 'createdBy'`),
+      raw(
+        sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'asset_face' AND column_name = 'createdBy'`,
+      ),
     ).resolves.toEqual([]);
   });
 });
@@ -89,7 +107,9 @@ describe('1798200000000-DropLibraryCreateId', () => {
 
     await libraryCreateId.up(db);
     await expect(
-      raw(sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'library' AND column_name = 'createId'`),
+      raw(
+        sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'library' AND column_name = 'createId'`,
+      ),
     ).resolves.toEqual([]);
     const { library: after } = await ctx.newLibrary({ ownerId: user.id });
     await expect(

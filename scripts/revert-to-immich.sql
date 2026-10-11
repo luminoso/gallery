@@ -207,7 +207,7 @@ DELETE FROM "shared_link" sl
 CREATE TEMP TABLE revert_space_link ("id" uuid) ON COMMIT DROP;
 DO $$
 BEGIN
-  IF to_regclass('shared_link_space') IS NOT NULL THEN
+  IF to_regclass('public.shared_link_space') IS NOT NULL THEN
     INSERT INTO revert_space_link SELECT "sharedLinkId" FROM "shared_link_space";
   END IF;
   IF EXISTS (SELECT FROM information_schema.columns

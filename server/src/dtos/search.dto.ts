@@ -417,6 +417,8 @@ const SmartSearchSchema = withShapeExclusivity(
   }),
 ).meta({ id: 'SmartSearchDto' });
 
+// gallery-fork: fork-only schema kept inline because it picks from BaseSearchSchema, and
+// gallery/search.dto.ts is a leaf that cannot import back from this file.
 const SmartSearchFacetsSchema = BaseSearchSchema.pick({
   type: true,
   isFavorite: true,
