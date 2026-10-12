@@ -56,15 +56,17 @@ The split was verified behaviour-neutral: for all 89 locales the merged bundle e
 files, except 56 upstream translations the fork had dropped while English was unchanged (seven
 `admin.storage_template_*` keys in seven locales, six zh_Hans keys, one ru key). Those come back.
 
-## Weblate
+## Translation service
 
-The fork's strings now live in their own files, so translating them needs a second Weblate component
-next to the one for upstream's files. Settings for the maintainer (not applied by this change):
+Gallery has no Weblate project. The nine maintained locales of fork strings are written in code PRs, other
+locales fall back to English, and upstream's strings in every locale arrive with each rebase, translated
+through Immich's Weblate. If Gallery ever sets up its own Weblate project, its component for the overlay
+needs these settings:
 
 | Setting | Value |
 | --- | --- |
 | Component name / slug | Gallery / `gallery` |
-| Source code repository | `weblate://<project>/<upstream-component>` to share its clone, or `https://github.com/open-noodle/gallery.git` |
+| Source code repository | `https://github.com/open-noodle/gallery.git` |
 | Repository branch | `main` |
 | File format | JSON nested structure file (`json-nested`) |
 | File mask | `i18n/gallery/*.json` |
@@ -75,9 +77,8 @@ next to the one for upstream's files. Settings for the maintainer (not applied b
 | Add-ons | "Customize JSON output" (indent 2, sort keys); "Cleanup translation files" so keys deleted from `en.json` leave the other locales |
 | Push | to branch `chore/translations` (the labeler's translation label), squashed |
 
-The existing component for `i18n/*.json` must stop pushing fork translations into upstream's files:
-make it read-only or remove it, since those files now track upstream byte for byte and any edit is lost
-at the next rebase. Weblate output may not match prettier's key order exactly, so run
+Such a project must not get a component for `i18n/*.json`: those files track upstream byte for byte and any
+edit is lost at the next rebase. Weblate output may not match prettier's key order exactly, so run
 `pnpm format:fix` on the translation branch before merging (CI's "Test i18n" job fails otherwise).
 `weblate-lock.yml` (an upstream workflow) does not reach the overlay: its filter `i18n/!(en)**\.json` is a
 picomatch glob whose `**` does not cross `/`, so it matches `i18n/de.json` but not `i18n/gallery/de.json`.

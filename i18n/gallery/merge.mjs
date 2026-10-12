@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Builds the locale bundle that web and mobile load: upstream i18n/<locale>.json plus the Gallery
-// overlay i18n/gallery/<locale>.json. Design and Weblate setup: specs/2026-10-11-i18n-overlay-design.md.
+// overlay i18n/gallery/<locale>.json. Design: specs/2026-10-11-i18n-overlay-design.md.
 //
 //   node i18n/gallery/merge.mjs              write the bundle to i18n/gallery/merged/
 //   node i18n/gallery/merge.mjs --out <dir>  write it elsewhere (apply-branding passes i18n/)
