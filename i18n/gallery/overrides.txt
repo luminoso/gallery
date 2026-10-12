@@ -45,6 +45,7 @@ location_permission_content exclusive
 login_form_server_empty
 login_form_server_error
 login_has_been_disabled
+manage_people en:64c793d0
 map_location_service_disabled_content exclusive
 map_marker_with_image en:72511fdc
 map_no_location_permission_content exclusive

@@ -5,6 +5,7 @@ import {
   mergeLocale,
   parseOverrides,
   translationOnlyProblem,
+  unpinnedTranslationProblem,
 } from "./merge.mjs";
 
 const upstream = {
@@ -65,5 +66,12 @@ test("a translation-only override fails when upstream rewords its English", () =
   assert.match(
     translationOnlyProblem("k", undefined, "Old text"),
     /without en:/,
+  );
+});
+
+test("a translation of an upstream key the locale lacks must be pinned", () => {
+  assert.match(
+    unpinnedTranslationProblem("zh_Hant.json", "k", "Old text"),
+    new RegExp(`"k en:${enTag("Old text")}"`),
   );
 });

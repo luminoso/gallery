@@ -173,6 +173,12 @@ export const translationOnlyProblem = (key, tag, upstreamEn) => {
     : `overrides.txt ${key}: translation-only override without en:${current}; add the tag so a rewording is caught`;
 };
 
+// The overlay translates an upstream key that upstream's own locale file leaves untranslated. The
+// merge takes it without a listing (there is nothing to collide with), so only overrides.txt can pin
+// the English it was written against.
+export const unpinnedTranslationProblem = (file, key, upstreamEn) =>
+  `gallery/${file} ${key}: translates upstream's English without a pin; list it in overrides.txt as "${key} en:${enTag(upstreamEn)}" so a rewording is caught`;
+
 export const checkOverlay = () => {
   const entries = readOverrideEntries();
   const overrides = readOverrides();
@@ -209,6 +215,10 @@ export const checkOverlay = () => {
       const upstreamValue = get(upstream, keys);
       const mode = overrides.get(key);
       if (upstreamValue === undefined) {
+        const upstreamEn = get(en, keys);
+        if (!mode && upstreamEn !== undefined) {
+          problems.push(unpinnedTranslationProblem(file, key, upstreamEn));
+        }
         continue;
       }
       if (!mode) {

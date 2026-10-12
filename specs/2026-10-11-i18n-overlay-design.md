@@ -16,9 +16,11 @@ rebase (13 + 5 stops in the v3.3.0 and v3.3.1 cycles).
 - `i18n/gallery/<locale>.json` is the overlay: keys the fork added, plus the fork's text for upstream
   keys it rewords. Same format and sorting as upstream (nested JSON, prettier with `sort-json`).
 - `i18n/gallery/overrides.txt` lists the upstream keys the overlay deliberately overrides: 9 reworded in
-  English (and translated), and 35 translation-only overrides, where the overlay keeps its own translations
+  English (and translated), and 36 translation-only overrides, where the overlay keeps its own translations
   of upstream's unchanged English. Each translation-only line carries `en:<hash>`, the first 8 hex digits of
-  the SHA-256 of the upstream English it was translated against.
+  the SHA-256 of the upstream English it was translated against. That includes a key upstream has not
+  translated in some locale yet (`manage_people` in `zh_Hant`): the merge would take the overlay value
+  without a listing, but then nothing would pin the English.
 - `i18n/gallery/merge.mjs` (Node, no dependencies) builds the bundle into the gitignored
   `i18n/gallery/merged/`, one file per upstream locale.
 
@@ -35,7 +37,8 @@ disclosures: falling back to English beats a stale translation there).
 
 `merge.test.mjs` pins this rule (`node --test`). `merge.mjs --check` (both run in CI's "Test i18n" job) reports overlay leaves that upstream now defines without a
 listing (dead: upstream wins), overrides that equal upstream (redundant), listed keys upstream no longer
-has, overlay files without an upstream locale, and translation-only overrides whose `en:` tag is missing or
+has, overlay files without an upstream locale, overlay translations of an upstream key that the same
+upstream locale lacks and `overrides.txt` does not list, and translation-only overrides whose `en:` tag is missing or
 no longer matches upstream's English (upstream reworded it, so the fork's translations describe the old
 text: review them, then update the tag). An upstream translation improvement to a key the fork overrides
 stays shadowed; that is the cost of keeping the fork's wording, and a rebase can drop an override line
