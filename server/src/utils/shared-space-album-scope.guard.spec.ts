@@ -52,16 +52,8 @@ import { describe, expect, it } from 'vitest';
 const SERVER_ROOT = process.cwd();
 
 // src/gallery holds the fork repositories (and the fork access classes) moved out of src/repositories;
-// every subfolder is scanned so a space read added anywhere in the fork module is caught.
-const REPO_DIRS = [
-  'src/repositories',
-  'src/gallery',
-  'src/gallery/controllers',
-  'src/gallery/dtos',
-  'src/gallery/repositories',
-  'src/gallery/services',
-  'src/gallery/utils',
-];
+// both trees are walked recursively so a space read added in any subfolder is caught.
+const REPO_DIRS = ['src/repositories', 'src/gallery'];
 const EXTRA_FILES = ['src/utils/database.ts'];
 
 // Fork-owned space-scope helpers. A call to any of these IS a space read (they
@@ -80,7 +72,7 @@ const SPACE_READ_MARKER = new RegExp(`${SPACE_HELPER.source}|${SPACE_TABLE.sourc
 // space-read marker. Glob, do not hardcode — a new leaky file is auto-included.
 const deriveScopingFiles = (): string[] => {
   const repoFiles = REPO_DIRS.flatMap((dir) =>
-    readdirSync(join(SERVER_ROOT, dir))
+    readdirSync(join(SERVER_ROOT, dir), { recursive: true, encoding: 'utf8' })
       .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'))
       .map((f) => `${dir}/${f}`),
   );
