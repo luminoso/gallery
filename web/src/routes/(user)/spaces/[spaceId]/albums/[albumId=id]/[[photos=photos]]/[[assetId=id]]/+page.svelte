@@ -196,7 +196,8 @@
   // instance alive — SvelteKit only swaps `data`. Local album-scoped state therefore has to be
   // re-seeded by hand (from the URL, which carries the sibling's query and filters), or the URL
   // changes while the page keeps rendering the album we came from.
-  $effect(() => {
+  // `pre` so the switch re-seeds the controller before its URL effect sees the new URL.
+  $effect.pre(() => {
     if (data.album.id === album.id) {
       return;
     }

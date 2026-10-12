@@ -200,8 +200,12 @@ describe('FilteredTimelineController', () => {
       navigate('/photos?q=cat');
       const onQueryChange = vi.fn();
       const sut = createController({ onQueryChange });
+      // Facets for the old query are loaded, so the "cleared" assertion below can fail.
+      sdkMock.searchSmartFacets.mockResolvedValueOnce(facets(3));
+      await sut.loadSmartFacets(sut.filters);
+      expect(sut.smartFacets?.total).toBe(3);
       const fetch = pendingFacets();
-      void sut.loadSmartFacets(sut.filters);
+      void sut.loadSmartFacets({ ...sut.filters, isFavorite: true });
       sut.searchResults = [assetFactory.build()];
 
       navigate('/photos?q=dog');
@@ -244,9 +248,11 @@ describe('FilteredTimelineController', () => {
       const sut = createController();
       const first = sut.loadSmartFacets(sut.filters);
       const second = sut.loadSmartFacets(sut.filters);
+      expect(second).toBe(first);
       expect(sdkMock.searchSmartFacets).toHaveBeenCalledTimes(1);
       fetch.resolve(facets(2));
-      expect(await first).toEqual(await second);
+      expect(await first).toEqual(facets(2));
+      expect(sut.smartFacets?.total).toBe(2);
     });
 
     it('resolves a failed fetch to the previous facets and logs only when not aborted', async () => {
@@ -260,10 +266,16 @@ describe('FilteredTimelineController', () => {
       error.mockClear();
       const fetch = pendingFacets();
       const aborted = sut.loadSmartFacets({ ...sut.filters, mediaType: 'video' });
-      void sut.loadSmartFacets({ ...sut.filters, mediaType: 'image' });
+      // An explicit second fetch: the superseding request must not fall through to another test's mock.
+      const superseding = pendingFacets();
+      const latest = sut.loadSmartFacets({ ...sut.filters, mediaType: 'image' });
+      expect(fetch.signal()?.aborted).toBe(true);
+      expect(superseding.signal()?.aborted).toBe(false);
       fetch.reject(new DOMException('aborted', 'AbortError'));
       await aborted;
       expect(error).not.toHaveBeenCalled();
+      superseding.resolve(facets(1));
+      expect(await latest).toEqual(facets(1));
       error.mockRestore();
     });
   });
