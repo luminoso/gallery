@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { controllers } from 'src/controllers/index.js';
 import { PersonController } from 'src/controllers/person.controller.js';
-import { GalleryPeopleController } from 'src/gallery/gallery-people.controller.js';
-import { GalleryPeopleService } from 'src/gallery/gallery-people.service.js';
+import { GalleryPeopleController } from 'src/gallery/controllers/gallery-people.controller.js';
+import { GalleryPeopleService } from 'src/gallery/services/gallery-people.service.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { errorDto } from 'test/medium/responses.js';
 import { factory } from 'test/small.factory.js';

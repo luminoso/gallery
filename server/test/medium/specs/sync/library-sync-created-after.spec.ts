@@ -1,5 +1,5 @@
 import { Kysely, sql } from 'kysely';
-import { GallerySyncRepository, accessibleLibraries } from 'src/gallery/sync/gallery-sync.repository.js';
+import { GallerySyncRepository, accessibleLibraries } from 'src/gallery/repositories/gallery-sync.repository.js';
 import { DB } from 'src/schema/index.js';
 import { SyncTestContext } from 'test/medium.factory.js';
 import { getKyselyDB } from 'test/utils.js';

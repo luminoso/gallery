@@ -1,7 +1,7 @@
 import { Kysely, sql } from 'kysely';
 import { AssetFileType, AssetVisibility, SharedSpaceRole, SourceType } from 'src/enum.js';
-import { personType } from 'src/gallery/person-sidecar.js';
-import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
+import { PetFaceRepository } from 'src/gallery/repositories/pet-face.repository.js';
+import { personType } from 'src/gallery/utils/person-sidecar.js';
 import { FaceIdentityRepository } from 'src/repositories/face-identity.repository.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { PersonRepository } from 'src/repositories/person.repository.js';

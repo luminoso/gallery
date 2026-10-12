@@ -14,7 +14,7 @@ import {
   mapPerson,
 } from 'src/dtos/person.dto.js';
 import { JobName, Permission } from 'src/enum.js';
-import { crossOwnerMergeAuthorizer, resolveMinimumFaceCount } from 'src/gallery/people-config.js';
+import { crossOwnerMergeAuthorizer, resolveMinimumFaceCount } from 'src/gallery/utils/people-config.js';
 import { BaseService } from 'src/services/base.service.js';
 import { asDateTimeString } from 'src/utils/date.js';
 import { ImmichMediaResponse } from 'src/utils/file.js';

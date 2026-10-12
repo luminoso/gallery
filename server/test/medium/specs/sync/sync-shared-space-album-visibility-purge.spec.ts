@@ -9,7 +9,7 @@ import { Kysely } from 'kysely';
 import { DateTime } from 'luxon';
 import { v4 } from 'uuid';
 import { AssetVisibility, SharedSpaceRole, SyncEntityType, SyncRequestType } from 'src/enum.js';
-import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
+import { GallerySyncRepository } from 'src/gallery/repositories/gallery-sync.repository.js';
 import { AlbumRepository } from 'src/repositories/album.repository.js';
 import { SharedSpaceRepository } from 'src/repositories/shared-space.repository.js';
 import { DB } from 'src/schema/index.js';

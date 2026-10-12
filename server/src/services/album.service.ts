@@ -16,7 +16,7 @@ import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset
 import { AuthDto } from 'src/dtos/auth.dto.js';
 import { MapMarkerResponseDto } from 'src/dtos/map.dto.js';
 import { AlbumUserRole, JobName, Permission } from 'src/enum.js';
-import { hasDirectAlbumReadAccess } from 'src/gallery/access-grants.js';
+import { hasDirectAlbumReadAccess } from 'src/gallery/utils/access-grants.js';
 import { AlbumAssetCount, AlbumInfoOptions } from 'src/repositories/album.repository.js';
 import { BaseService } from 'src/services/base.service.js';
 import { addAssets, removeAssets } from 'src/utils/asset.util.js';

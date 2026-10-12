@@ -3,7 +3,7 @@ import { type Kysely, type SelectQueryBuilder, type SqlBool, sql } from 'kysely'
 import { InjectKysely } from 'nestjs-kysely';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
 import { AssetType, AssetVisibility } from 'src/enum.js';
-import { personIdentityId } from 'src/gallery/person-sidecar.js';
+import { personIdentityId } from 'src/gallery/utils/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { withAssetFilter } from 'src/utils/asset-filter.js';
 import { anyUuid, asUuid, hasPeople } from 'src/utils/database.js';

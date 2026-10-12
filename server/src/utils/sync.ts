@@ -38,7 +38,7 @@ export const serialize = <T extends keyof SyncItem, D extends SyncItem[T]>({
 }: SerializeOptions<T, D>) =>
   mapJsonLine({ type, data, ack: toAck({ type: ackType ?? type, updateId: ids[0], extraId: ids[1] }) });
 
-// Stream helpers shared by SyncService and the fork's GallerySyncStreams (src/gallery/sync).
+// Stream helpers shared by SyncService and the fork's GallerySyncStreams (src/gallery/utils/gallery-sync.streams.ts).
 export type CheckpointMap = Partial<Record<SyncEntityType, SyncAck>>;
 // #763: isFavorite is SqlBool (boolean | 0 | 1), not boolean, because every asset-payload stream
 // now projects it via favoriteExistsFor's eb.exists(...) (sync.repository.ts), whose driver-level

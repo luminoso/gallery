@@ -1,4 +1,4 @@
-import { getClientServerVersion, isGalleryClient, stockClientRoom } from 'src/gallery/client-version.js';
+import { getClientServerVersion, isGalleryClient, stockClientRoom } from 'src/gallery/utils/client-version.js';
 
 vitest.mock('node:fs', () => ({
   readFileSync: () => JSON.stringify({ version: '5.4.0', immichVersion: '3.3.1' }),

@@ -21,7 +21,7 @@ Plan: `docs/superpowers/plans/2026-08-20-upstream-config-endpoints-port.md`.
 
 ## The port
 
-Fork config now lives in a **fork-owned leaf module** `server/src/gallery/config.dto.ts`, composed
+Fork config now lives in a **fork-owned leaf module** `server/src/gallery/dtos/config.dto.ts`, composed
 into upstream's schema at seven seams. Every fork field is unannotated and therefore defaults to
 `Admin` — behaviour-identical to before.
 

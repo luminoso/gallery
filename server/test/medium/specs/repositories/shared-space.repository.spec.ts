@@ -1,6 +1,6 @@
 import { Kysely } from 'kysely';
 import { AssetVisibility, SharedSpaceActivityType, SharedSpaceRole, SourceType } from 'src/enum.js';
-import { personSidecarColumns } from 'src/gallery/person-sidecar.js';
+import { personSidecarColumns } from 'src/gallery/utils/person-sidecar.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { SharedSpaceRepository } from 'src/repositories/shared-space.repository.js';
 import { DB } from 'src/schema/index.js';

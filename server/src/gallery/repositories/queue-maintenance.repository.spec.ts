@@ -1,7 +1,7 @@
 import { ModuleRef } from '@nestjs/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JobName, QueueName } from 'src/enum.js';
-import { QueueMaintenanceRepository } from 'src/gallery/queue-maintenance.repository.js';
+import { QueueMaintenanceRepository } from 'src/gallery/repositories/queue-maintenance.repository.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 
 const setup = () => {

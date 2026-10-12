@@ -24,7 +24,7 @@ import {
   personType,
   setPersonIdentity,
   writePersonSidecars,
-} from 'src/gallery/person-sidecar.js';
+} from 'src/gallery/utils/person-sidecar.js';
 import { type YearMonthDay } from 'src/repositories/asset.repository.js';
 import { DB } from 'src/schema/index.js';
 import { AssetFaceTable } from 'src/schema/tables/asset-face.table.js';

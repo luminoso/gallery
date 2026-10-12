@@ -21,7 +21,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AuthDto } from 'src/dtos/auth.dto.js';
 import { AssetEditAction } from 'src/dtos/editing.dto.js';
 import { AssetVisibility, SourceType } from 'src/enum.js';
-import { personSidecarColumns } from 'src/gallery/person-sidecar.js';
+import { personSidecarColumns } from 'src/gallery/utils/person-sidecar.js';
 import { AssetEditRepository } from 'src/repositories/asset-edit.repository.js';
 import { AssetRepository } from 'src/repositories/asset.repository.js';
 import { DatabaseRepository } from 'src/repositories/database.repository.js';

@@ -42,7 +42,7 @@ import {
   SearchOrderField,
   TimeBucketSize,
 } from 'src/enum.js';
-import { personSidecarColumns } from 'src/gallery/person-sidecar.js';
+import { personSidecarColumns } from 'src/gallery/utils/person-sidecar.js';
 import {
   AssetSearchBuilderOptions,
   AssetSearchBuilderV3Options,

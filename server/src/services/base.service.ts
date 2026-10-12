@@ -6,16 +6,16 @@ import { SALT_ROUNDS } from 'src/constants.js';
 import { StorageCore } from 'src/cores/storage.core.js';
 import { UserAdmin } from 'src/database.js';
 import { SystemConfig } from 'src/dtos/config.dto.js';
-import { BackendMediaServer } from 'src/gallery/backend-media-server.js';
-import { FaceSearchRepository } from 'src/gallery/face-search.repository.js';
-import { FilterSuggestionRepository } from 'src/gallery/filter-suggestion.repository.js';
-import { MemoryRuleAssetRepository } from 'src/gallery/memory-rule-asset.repository.js';
-import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
-import { QueueMaintenanceRepository } from 'src/gallery/queue-maintenance.repository.js';
-import { SmartFacetRepository } from 'src/gallery/smart-facet.repository.js';
-import { SpaceAlbumRepository } from 'src/gallery/space-album.repository.js';
-import { computePhysicalUsage } from 'src/gallery/storage-usage.js';
-import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
+import { FaceSearchRepository } from 'src/gallery/repositories/face-search.repository.js';
+import { FilterSuggestionRepository } from 'src/gallery/repositories/filter-suggestion.repository.js';
+import { GallerySyncRepository } from 'src/gallery/repositories/gallery-sync.repository.js';
+import { MemoryRuleAssetRepository } from 'src/gallery/repositories/memory-rule-asset.repository.js';
+import { PetFaceRepository } from 'src/gallery/repositories/pet-face.repository.js';
+import { QueueMaintenanceRepository } from 'src/gallery/repositories/queue-maintenance.repository.js';
+import { SmartFacetRepository } from 'src/gallery/repositories/smart-facet.repository.js';
+import { SpaceAlbumRepository } from 'src/gallery/repositories/space-album.repository.js';
+import { BackendMediaServer } from 'src/gallery/utils/backend-media-server.js';
+import { computePhysicalUsage } from 'src/gallery/utils/storage-usage.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
 import { ActivityRepository } from 'src/repositories/activity.repository.js';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository.js';
@@ -435,7 +435,7 @@ export class BaseService {
   // here so a single admin toggle can decide what quotaUsageInBytes means: upstream's originals-only
   // sum, or a physical walk that also counts thumbnails and transcodes. Either way the column holds
   // the figure the admin asked for, so display and quota enforcement need no knowledge of the
-  // setting. The walk's own logic lives in src/gallery/storage-usage.ts.
+  // setting. The walk's own logic lives in src/gallery/utils/storage-usage.ts.
   protected async syncUsage(id?: string): Promise<void> {
     // The walk is expensive — hundreds of thousands of stat calls on a large install — so the
     // default path stays exactly as cheap as upstream's single statement.

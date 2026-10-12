@@ -4,7 +4,7 @@ import type { AuthDto } from 'src/dtos/auth.dto.js';
 import { Endpoint, HistoryBuilder } from 'src/decorators.js';
 import { AssetEditableDto, AssetEditableResponseDto, AssetFavoriteUpdateDto } from 'src/dtos/asset.dto.js';
 import { ApiTag, Permission, RouteKey } from 'src/enum.js';
-import { GalleryAssetService } from 'src/gallery/gallery-asset.service.js';
+import { GalleryAssetService } from 'src/gallery/services/gallery-asset.service.js';
 import { Auth, Authenticated } from 'src/middleware/auth.guard.js';
 
 // Mounted before AssetController (see src/gallery/index.ts), so the literal `PUT /assets/favorites` matches before

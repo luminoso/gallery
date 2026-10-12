@@ -11,7 +11,7 @@ import {
   personSpecies,
   personType,
   setPersonIdentity,
-} from 'src/gallery/person-sidecar.js';
+} from 'src/gallery/utils/person-sidecar.js';
 import { probes } from 'src/repositories/database.repository.js';
 import { DB } from 'src/schema/index.js';
 import { FaceIdentityFaceSource, FaceIdentityFaceTable } from 'src/schema/tables/face-identity-face.table.js';

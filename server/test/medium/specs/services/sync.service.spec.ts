@@ -3,7 +3,7 @@ import { Kysely } from 'kysely';
 import { DateTime } from 'luxon';
 import { v4 } from 'uuid';
 import { AssetMetadataKey, UserMetadataKey } from 'src/enum.js';
-import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
+import { GallerySyncRepository } from 'src/gallery/repositories/gallery-sync.repository.js';
 import { DatabaseRepository } from 'src/repositories/database.repository.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { BaseSync, SyncRepository } from 'src/repositories/sync.repository.js';

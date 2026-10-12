@@ -1,7 +1,7 @@
 import { Writable } from 'node:stream';
 import { SyncEntityType, SyncRequestType } from 'src/enum.js';
-import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
-import { GallerySyncStreams } from 'src/gallery/sync/gallery-sync.streams.js';
+import { GallerySyncRepository } from 'src/gallery/repositories/gallery-sync.repository.js';
+import { GallerySyncStreams } from 'src/gallery/utils/gallery-sync.streams.js';
 import { SYNC_TYPES_ORDER } from 'src/services/sync.service.js';
 import { fromAck } from 'src/utils/sync.js';
 import { makeStream } from 'test/utils.js';

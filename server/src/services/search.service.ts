@@ -30,7 +30,7 @@ import {
   SmartSearchFacetsResponseDto,
   TagSuggestionRequestDto,
   TagSuggestionResponseDto,
-} from 'src/gallery/search.dto.js';
+} from 'src/gallery/dtos/search.dto.js';
 import { AssetSearchScope } from 'src/repositories/search.repository.js';
 import { BaseService } from 'src/services/base.service.js';
 import { requireElevatedPermission } from 'src/utils/access.js';

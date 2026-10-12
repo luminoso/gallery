@@ -11,7 +11,7 @@ import {
 
 // Fork access checks, mounted on AccessRepository next to upstream's inner classes (spaceAlbum, spaceAsset,
 // galleryPerson, sharedSpace) so upstream's classes keep only upstream methods. The grants built on them live in
-// src/gallery/access-grants.ts.
+// src/gallery/utils/access-grants.ts.
 
 export class SpaceAlbumAccess {
   constructor(private db: Kysely<DB>) {}

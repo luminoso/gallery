@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { AssetController } from 'src/controllers/asset.controller.js';
 import { controllers } from 'src/controllers/index.js';
-import { GalleryAssetController } from 'src/gallery/gallery-asset.controller.js';
-import { GalleryAssetService } from 'src/gallery/gallery-asset.service.js';
+import { GalleryAssetController } from 'src/gallery/controllers/gallery-asset.controller.js';
+import { GalleryAssetService } from 'src/gallery/services/gallery-asset.service.js';
 import { factory } from 'test/small.factory.js';
 import { ControllerContext, controllerSetup, mockBaseService } from 'test/utils.js';
 

@@ -42,7 +42,7 @@ import {
   SystemMetadataKey,
   VectorIndex,
 } from 'src/enum.js';
-import { crossOwnerMergeAuthorizer, resolveMinimumFaceCount } from 'src/gallery/people-config.js';
+import { crossOwnerMergeAuthorizer, resolveMinimumFaceCount } from 'src/gallery/utils/people-config.js';
 import { BoundingBox } from 'src/repositories/machine-learning.repository.js';
 import { PersonId } from 'src/repositories/person.repository.js';
 import { DB } from 'src/schema/index.js';

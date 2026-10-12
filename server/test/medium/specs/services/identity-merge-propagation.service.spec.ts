@@ -1,6 +1,6 @@
 import { Kysely } from 'kysely';
 import { JobName, SharedSpaceActivityType, SharedSpaceRole } from 'src/enum.js';
-import { personIdentityId } from 'src/gallery/person-sidecar.js';
+import { personIdentityId } from 'src/gallery/utils/person-sidecar.js';
 import { DatabaseRepository } from 'src/repositories/database.repository.js';
 import { FaceIdentityRepository } from 'src/repositories/face-identity.repository.js';
 import { JobRepository } from 'src/repositories/job.repository.js';

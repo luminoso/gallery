@@ -51,8 +51,17 @@ import { describe, expect, it } from 'vitest';
 // Server root — vitest runs with cwd at server/ (matches face-identity-query-shape.spec.ts).
 const SERVER_ROOT = process.cwd();
 
-// src/gallery holds the fork repositories (and the fork access classes) moved out of src/repositories.
-const REPO_DIRS = ['src/repositories', 'src/gallery', 'src/gallery/sync'];
+// src/gallery holds the fork repositories (and the fork access classes) moved out of src/repositories;
+// every subfolder is scanned so a space read added anywhere in the fork module is caught.
+const REPO_DIRS = [
+  'src/repositories',
+  'src/gallery',
+  'src/gallery/controllers',
+  'src/gallery/dtos',
+  'src/gallery/repositories',
+  'src/gallery/services',
+  'src/gallery/utils',
+];
 const EXTRA_FILES = ['src/utils/database.ts'];
 
 // Fork-owned space-scope helpers. A call to any of these IS a space read (they

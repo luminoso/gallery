@@ -1,4 +1,4 @@
-import { AssetVisibilityTransitionService } from 'src/gallery/asset-visibility-transition.service.js';
+import { AssetVisibilityTransitionService } from 'src/gallery/services/asset-visibility-transition.service.js';
 import { newUuid } from 'test/small.factory.js';
 import { ServiceMocks, newTestService } from 'test/utils.js';
 

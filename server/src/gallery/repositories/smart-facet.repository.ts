@@ -7,7 +7,7 @@ import {
   FilterSuggestionPerson,
   FilterSuggestionsResult,
   getFilteredIdentityPeople,
-} from 'src/gallery/filter-suggestion.repository.js';
+} from 'src/gallery/repositories/filter-suggestion.repository.js';
 import { probes } from 'src/repositories/database.repository.js';
 import { SmartSearchOptions, isActiveDistanceThreshold } from 'src/repositories/search.repository.js';
 import { DB } from 'src/schema/index.js';

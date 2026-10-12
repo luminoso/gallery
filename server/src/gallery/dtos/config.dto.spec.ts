@@ -7,7 +7,7 @@ import {
   GalleryMemoriesSchema,
   GalleryPetDetectionSchema,
   galleryConfigBool,
-} from 'src/gallery/config.dto.js';
+} from 'src/gallery/dtos/config.dto.js';
 
 describe('gallery config fragments', () => {
   it('coerces string booleans the way configBool does', () => {

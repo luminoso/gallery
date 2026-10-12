@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { writeFile } from 'node:fs/promises';
 import { JobName, UserMetadataKey } from 'src/enum.js';
-import { GalleryPeopleService } from 'src/gallery/gallery-people.service.js';
+import { GalleryPeopleService } from 'src/gallery/services/gallery-people.service.js';
 import { ImmichStreamResponse } from 'src/utils/file.js';
 import { CROSS_OWNER_MERGE_ERROR_CODE } from 'src/utils/merge-policy.js';
 import { AssetFaceFactory } from 'test/factories/asset-face.factory.js';

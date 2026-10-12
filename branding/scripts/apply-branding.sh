@@ -1010,7 +1010,7 @@ patch_versions() {
       local tmp
       tmp=$(mktemp)
       # Keep the upstream base (the source version) as immichVersion: the server reports it to stock
-      # Immich clients (server/src/gallery/client-version.ts). `//=` keeps a second run idempotent.
+      # Immich clients (server/src/gallery/utils/client-version.ts). `//=` keeps a second run idempotent.
       jq --arg v "$FORK_VERSION" '.immichVersion //= .version | .version = $v' "$pkg" > "$tmp"
       chmod 644 "$tmp"
       mv "$tmp" "$pkg"

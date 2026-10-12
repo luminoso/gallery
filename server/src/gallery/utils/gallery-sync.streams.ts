@@ -1,7 +1,7 @@
 import { Writable } from 'node:stream';
 import { SyncStreamDto } from 'src/dtos/sync.dto.js';
 import { MemoryType, SyncEntityType, SyncRequestType } from 'src/enum.js';
-import { GallerySyncRepository } from 'src/gallery/sync/gallery-sync.repository.js';
+import { GallerySyncRepository } from 'src/gallery/repositories/gallery-sync.repository.js';
 import { SyncQueryOptions } from 'src/repositories/sync.repository.js';
 import {
   CheckpointMap,

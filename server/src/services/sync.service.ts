@@ -7,7 +7,7 @@ import { AuthDto } from 'src/dtos/auth.dto.js';
 import { AssetEditAction } from 'src/dtos/editing.dto.js';
 import { SyncAckDeleteDto, SyncAckSetDto, SyncStreamDto, syncAlbumV2ToV1 } from 'src/dtos/sync.dto.js';
 import { JobName, MemoryType, QueueName, SyncEntityType, SyncRequestType } from 'src/enum.js';
-import { GallerySyncStreams } from 'src/gallery/sync/gallery-sync.streams.js';
+import { GallerySyncStreams } from 'src/gallery/utils/gallery-sync.streams.js';
 import { SyncQueryOptions } from 'src/repositories/sync.repository.js';
 import { SessionSyncCheckpointTable } from 'src/schema/tables/sync-checkpoint.table.js';
 import { BaseService } from 'src/services/base.service.js';

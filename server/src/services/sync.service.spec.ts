@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Writable } from 'node:stream';
 import { AssetEditAction } from 'src/dtos/editing.dto.js';
 import { AlbumUserRole, AssetVisibility, MemoryType, SyncEntityType, SyncRequestType } from 'src/enum.js';
-import { GallerySyncStreams } from 'src/gallery/sync/gallery-sync.streams.js';
+import { GallerySyncStreams } from 'src/gallery/utils/gallery-sync.streams.js';
 import { SYNC_TYPES_ORDER, SyncService } from 'src/services/sync.service.js';
 import { ClientDisconnectedError } from 'src/utils/response.js';
 import { send, serialize, toAck } from 'src/utils/sync.js';

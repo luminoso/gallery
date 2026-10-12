@@ -13,7 +13,7 @@ import {
   SourceType,
   VectorIndex,
 } from 'src/enum.js';
-import { personIdentityId, personIsPet, personSpecies, personType } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personIsPet, personSpecies, personType } from 'src/gallery/utils/person-sidecar.js';
 import { probes } from 'src/repositories/database.repository.js';
 import { DB } from 'src/schema/index.js';
 import { SharedSpaceAlbumTable } from 'src/schema/tables/shared-space-album.table.js';

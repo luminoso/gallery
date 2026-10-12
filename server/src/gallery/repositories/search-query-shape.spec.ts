@@ -3,8 +3,8 @@ import { DummyDriver, Kysely, PostgresAdapter, PostgresIntrospector, PostgresQue
 import { describe, expect, it } from 'vitest';
 import type { DB } from 'src/schema/index.js';
 import { AssetOrder, AssetVisibility } from 'src/enum.js';
-import { FilterSuggestionRepository } from 'src/gallery/filter-suggestion.repository.js';
-import { SmartFacetRepository } from 'src/gallery/smart-facet.repository.js';
+import { FilterSuggestionRepository } from 'src/gallery/repositories/filter-suggestion.repository.js';
+import { SmartFacetRepository } from 'src/gallery/repositories/smart-facet.repository.js';
 import { SearchRepository } from 'src/repositories/search.repository.js';
 import { searchAssetBuilderLegacy } from 'src/utils/database.js';
 

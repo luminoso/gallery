@@ -4,7 +4,7 @@ import { jsonObjectFrom } from 'kysely/helpers/postgres';
 import { InjectKysely } from 'nestjs-kysely';
 import type { PetSearchTable } from 'src/schema/tables/pet-search.table.js';
 import { DummyValue, GenerateSql } from 'src/decorators.js';
-import { personIdentityId, personSidecarColumns } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personSidecarColumns } from 'src/gallery/utils/person-sidecar.js';
 import { DB } from 'src/schema/index.js';
 import { AssetFaceTable } from 'src/schema/tables/asset-face.table.js';
 

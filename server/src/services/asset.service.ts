@@ -42,9 +42,9 @@ import {
   QueueName,
   SharedSpaceActivityType,
 } from 'src/enum.js';
-import { applyAssetResponseOverlay } from 'src/gallery/asset-response-overlay.js';
-import { applyVisibilityTransitionSideEffects } from 'src/gallery/asset-visibility-transition.service.js';
-import { updateAssetFavorites } from 'src/gallery/gallery-asset.service.js';
+import { applyVisibilityTransitionSideEffects } from 'src/gallery/services/asset-visibility-transition.service.js';
+import { updateAssetFavorites } from 'src/gallery/services/gallery-asset.service.js';
+import { applyAssetResponseOverlay } from 'src/gallery/utils/asset-response-overlay.js';
 import { BaseService } from 'src/services/base.service.js';
 import { StorageService } from 'src/services/storage.service.js';
 import { requireElevatedPermission } from 'src/utils/access.js';

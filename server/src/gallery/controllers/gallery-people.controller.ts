@@ -15,7 +15,7 @@ import {
   RepresentativeFaceUpdateDto,
 } from 'src/dtos/person.dto.js';
 import { ApiTag, Permission } from 'src/enum.js';
-import { GalleryPeopleService } from 'src/gallery/gallery-people.service.js';
+import { GalleryPeopleService } from 'src/gallery/services/gallery-people.service.js';
 import { Auth, Authenticated, FileResponse } from 'src/middleware/auth.guard.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { sendFile } from 'src/utils/file.js';

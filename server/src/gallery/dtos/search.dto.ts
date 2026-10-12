@@ -7,7 +7,7 @@ import { AssetOrderSchema, AssetTypeSchema } from 'src/enum.js';
 import { IsNotSiblingOf, boundedTextFilter, isoDatetimeToDate, stringToBool } from 'src/validation.js';
 
 // Fork search request fields, merged into upstream's schemas in src/dtos/search.dto.ts with one `.extend(...)` each
-// (the src/gallery/config.dto.ts pattern), plus the fork-only filter-suggestion and facet DTOs. This module must stay
+// (the src/gallery/dtos/config.dto.ts pattern), plus the fork-only filter-suggestion and facet DTOs. This module must stay
 // a leaf: src/dtos/search.dto.ts imports it, so importing back from there would be circular.
 
 // Deliberate copy of the module-private DEPRECATED_FLAT_FIELD in src/dtos/search.dto.ts (see the leaf rule above).

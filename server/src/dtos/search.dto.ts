@@ -20,7 +20,7 @@ import {
   GallerySmartSearchExtension,
   GalleryStatisticsSearchExtension,
   withGallerySuggestionScope,
-} from 'src/gallery/search.dto.js';
+} from 'src/gallery/dtos/search.dto.js';
 import { isoDatetimeToDate, nonEmptyPartial, stringToBool } from 'src/validation.js';
 
 const ADDED_V3_2 = new HistoryBuilder().added('v3.2.0').getExtensions();
@@ -418,7 +418,7 @@ const SmartSearchSchema = withShapeExclusivity(
 ).meta({ id: 'SmartSearchDto' });
 
 // gallery-fork: fork-only schema kept inline because it picks from BaseSearchSchema, and
-// gallery/search.dto.ts is a leaf that cannot import back from this file.
+// gallery/dtos/search.dto.ts is a leaf that cannot import back from this file.
 const SmartSearchFacetsSchema = BaseSearchSchema.pick({
   type: true,
   isFavorite: true,

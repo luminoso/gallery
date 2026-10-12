@@ -13,7 +13,7 @@ import {
 } from 'src/dtos/activity.dto.js';
 import { AuthDto } from 'src/dtos/auth.dto.js';
 import { Permission } from 'src/enum.js';
-import { hasDirectAlbumReadAccess } from 'src/gallery/access-grants.js';
+import { hasDirectAlbumReadAccess } from 'src/gallery/utils/access-grants.js';
 import { BaseService } from 'src/services/base.service.js';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { GalleryAssetService } from 'src/gallery/gallery-asset.service.js';
+import { GalleryAssetService } from 'src/gallery/services/gallery-asset.service.js';
 import { AuthFactory } from 'test/factories/auth.factory.js';
 import { newUuid } from 'test/small.factory.js';
 import { ServiceMocks, newTestService } from 'test/utils.js';

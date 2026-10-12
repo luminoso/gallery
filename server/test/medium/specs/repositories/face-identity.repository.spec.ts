@@ -1,7 +1,7 @@
 import { Kysely } from 'kysely';
 import { randomUUID } from 'node:crypto';
 import { AssetVisibility, SharedSpaceRole } from 'src/enum.js';
-import { personIdentityId, personSidecarColumns, personType } from 'src/gallery/person-sidecar.js';
+import { personIdentityId, personSidecarColumns, personType } from 'src/gallery/utils/person-sidecar.js';
 import {
   FaceIdentityRepository,
   type SharedSpaceFaceMatchBackfillTarget,

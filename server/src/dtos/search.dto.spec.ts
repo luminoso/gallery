@@ -6,7 +6,7 @@ import {
   SmartSearchFacetsDto,
 } from 'src/dtos/search.dto.js';
 import { AssetType } from 'src/enum.js';
-import { FilterSuggestionsRequestDto } from 'src/gallery/search.dto.js';
+import { FilterSuggestionsRequestDto } from 'src/gallery/dtos/search.dto.js';
 
 describe('search DTO albumless filters', () => {
   it('should accept isNotInAlbum on smart search requests', () => {

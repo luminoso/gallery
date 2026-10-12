@@ -1,9 +1,9 @@
 import { Kysely } from 'kysely';
 import { SystemConfig } from 'src/dtos/config.dto.js';
 import { AssetFileType, AssetVisibility, JobName, JobStatus, SharedSpaceRole, SystemMetadataKey } from 'src/enum.js';
-import { FaceSearchRepository } from 'src/gallery/face-search.repository.js';
-import { personIdentityId, personSidecarColumns, personSpecies } from 'src/gallery/person-sidecar.js';
-import { PetFaceRepository } from 'src/gallery/pet-face.repository.js';
+import { FaceSearchRepository } from 'src/gallery/repositories/face-search.repository.js';
+import { PetFaceRepository } from 'src/gallery/repositories/pet-face.repository.js';
+import { personIdentityId, personSidecarColumns, personSpecies } from 'src/gallery/utils/person-sidecar.js';
 import { AssetJobRepository } from 'src/repositories/asset-job.repository.js';
 import { AssetRepository } from 'src/repositories/asset.repository.js';
 import { ConfigRepository } from 'src/repositories/config.repository.js';

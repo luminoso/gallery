@@ -9,7 +9,7 @@ import {
   SharedSpaceAccess,
   SpaceAlbumAccess,
   SpaceAssetAccess,
-} from 'src/gallery/access.repository.js';
+} from 'src/gallery/repositories/access.repository.js';
 import { PersonId } from 'src/repositories/person.repository.js';
 import { DB } from 'src/schema/index.js';
 import { asUuid } from 'src/utils/database.js';

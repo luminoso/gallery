@@ -26,7 +26,7 @@ import {
   SmartSearchFacetsResponseDto,
   TagSuggestionRequestDto,
   TagSuggestionResponseDto,
-} from 'src/gallery/search.dto.js';
+} from 'src/gallery/dtos/search.dto.js';
 import { Auth, Authenticated } from 'src/middleware/auth.guard.js';
 import { SearchService } from 'src/services/search.service.js';
 

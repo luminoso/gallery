@@ -150,7 +150,7 @@ export class BackendMediaServer {
       return new DiskStorageBackend('', this.deps.storageRepository);
     }
     // lazy import to avoid circular dependency (StorageService extends BaseService)
-    const { StorageService } = await import('../services/storage.service.js');
+    const { StorageService } = await import('../../services/storage.service.js');
     return StorageService.resolveBackendForKey(key);
   }
 

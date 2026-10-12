@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Kysely, sql } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { AssetVisibility } from 'src/enum.js';
-import { personIsPet } from 'src/gallery/person-sidecar.js';
+import { personIsPet } from 'src/gallery/utils/person-sidecar.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 import { DB } from 'src/schema/index.js';
 

@@ -5,7 +5,7 @@ import { JobName, JobStatus, MetadataKey, QueueJobStatus, QueueName, SystemMetad
 import {
   FACE_IDENTITY_BACKFILL_MAX_CONTINUATIONS,
   FaceIdentityMaintenanceService,
-} from 'src/gallery/face-identity-maintenance.service.js';
+} from 'src/gallery/services/face-identity-maintenance.service.js';
 import { factory } from 'test/small.factory.js';
 import { ServiceMocks, newTestService } from 'test/utils.js';
 

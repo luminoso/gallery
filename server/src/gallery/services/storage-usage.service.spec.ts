@@ -1,5 +1,5 @@
 import { JobName } from 'src/enum.js';
-import { StorageUsageService } from 'src/gallery/storage-usage.service.js';
+import { StorageUsageService } from 'src/gallery/services/storage-usage.service.js';
 import { mockEnvData } from 'test/repositories/config.repository.mock.js';
 import { ServiceMocks, newTestService } from 'test/utils.js';
 
