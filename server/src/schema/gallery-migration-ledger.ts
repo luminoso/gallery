@@ -2,7 +2,7 @@ import { Kysely, sql } from 'kysely';
 import { FileMigrationProvider, MigrationResult, MigrationResultSet, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { serverVersion } from 'src/constants.js';
+import { immichVersion, serverVersion } from 'src/constants.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
 
 // Fork migrations are recorded in their own ledger so `kysely_migrations` only ever holds upstream
@@ -107,7 +107,7 @@ const bootstrapGalleryLedger = async (db: Kysely<any>, galleryNames: string[], u
     throw new Error(
       `This database was migrated by a newer Immich release than Gallery ${serverVersion} is based on: ` +
         `migration "${unknown.toSorted()[0]}" is not part of it (or was renamed since). ` +
-        `Gallery ${serverVersion} supports Immich databases up to migration "${upstreamNames.at(-1)}". ` +
+        `Gallery ${serverVersion} supports Immich databases up to migration "${upstreamNames.at(-1)}" (Immich ${immichVersion}). ` +
         `Restore the database backup taken before the newer Immich started, ` +
         `or wait for a Gallery release based on that Immich version. Nothing was changed.`,
     );
