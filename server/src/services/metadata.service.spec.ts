@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import { randomBytes } from 'node:crypto';
 import { Stats } from 'node:fs';
 import { isAbsolute } from 'node:path';
+import { S3StorageBackend } from 'src/backends/s3-storage.backend.js';
 import { defaults } from 'src/dtos/config.dto.js';
 import {
   AssetFileType,
@@ -15,7 +16,6 @@ import {
   JobStatus,
   SourceType,
 } from 'src/enum.js';
-import { StorageBackend } from 'src/interfaces/storage-backend.interface.js';
 import { ImmichTags } from 'src/repositories/metadata.repository.js';
 import { MetadataService, firstDateTime } from 'src/services/metadata.service.js';
 import { StorageService } from 'src/services/storage.service.js';
@@ -2785,10 +2785,12 @@ describe(MetadataService.name, () => {
         exists: vi.fn(),
         put: vi.fn(),
       };
-      vi.spyOn(StorageService, 'resolveBackendForKey').mockReturnValue(mockBackend as unknown as StorageBackend);
+      // the real resolver then sends relative keys here and disk paths to the disk backend
+      StorageService['s3Backend'] = mockBackend as unknown as S3StorageBackend;
     });
 
     afterEach(() => {
+      StorageService['s3Backend'] = undefined;
       vi.restoreAllMocks();
     });
 

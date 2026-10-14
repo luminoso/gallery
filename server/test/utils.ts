@@ -23,6 +23,7 @@ import { PetFaceRepository } from 'src/gallery/repositories/pet-face.repository.
 import { QueueMaintenanceRepository } from 'src/gallery/repositories/queue-maintenance.repository.js';
 import { SmartFacetRepository } from 'src/gallery/repositories/smart-facet.repository.js';
 import { SpaceAlbumRepository } from 'src/gallery/repositories/space-album.repository.js';
+import { VideoTrimRepository } from 'src/gallery/repositories/video-trim.repository.js';
 import { AssetUploadInterceptor } from 'src/middleware/asset-upload.interceptor.js';
 import { AuthGuard } from 'src/middleware/auth.guard.js';
 import { FileUploadInterceptor } from 'src/middleware/file-upload.interceptor.js';
@@ -329,6 +330,7 @@ export type ServiceOverrides = {
   petFace: PetFaceRepository;
   faceSearch: FaceSearchRepository;
   gallerySync: GallerySyncRepository;
+  videoTrim: VideoTrimRepository;
 };
 
 type As<T> = T extends RepositoryInterface<infer U> ? U : never;
@@ -446,6 +448,7 @@ export const getMocks = () => {
     petFace: automock(PetFaceRepository, { strict: false }),
     faceSearch: automock(FaceSearchRepository, { strict: false }),
     gallerySync: automock(GallerySyncRepository),
+    videoTrim: automock(VideoTrimRepository, { strict: false }),
   };
 
   // every new user gets a cluster group, which is incidental to most tests
@@ -536,6 +539,7 @@ export const newTestService = <T extends BaseService>(
     overrides.petFace || (mocks.petFace as As<PetFaceRepository>),
     overrides.faceSearch || (mocks.faceSearch as As<FaceSearchRepository>),
     overrides.gallerySync || (mocks.gallerySync as As<GallerySyncRepository>),
+    overrides.videoTrim || (mocks.videoTrim as As<VideoTrimRepository>),
   );
 
   return {

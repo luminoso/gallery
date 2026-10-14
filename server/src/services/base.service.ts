@@ -14,6 +14,7 @@ import { PetFaceRepository } from 'src/gallery/repositories/pet-face.repository.
 import { QueueMaintenanceRepository } from 'src/gallery/repositories/queue-maintenance.repository.js';
 import { SmartFacetRepository } from 'src/gallery/repositories/smart-facet.repository.js';
 import { SpaceAlbumRepository } from 'src/gallery/repositories/space-album.repository.js';
+import { VideoTrimRepository } from 'src/gallery/repositories/video-trim.repository.js';
 import { BackendMediaServer } from 'src/gallery/utils/backend-media-server.js';
 import { computePhysicalUsage } from 'src/gallery/utils/storage-usage.js';
 import { AccessRepository } from 'src/repositories/access.repository.js';
@@ -172,6 +173,7 @@ export const BASE_SERVICE_DEPENDENCIES = [
   PetFaceRepository,
   FaceSearchRepository,
   GallerySyncRepository,
+  VideoTrimRepository,
 ] as const;
 
 @Injectable()
@@ -257,6 +259,7 @@ export class BaseService {
     protected petFaceRepository: PetFaceRepository,
     protected faceSearchRepository: FaceSearchRepository,
     protected gallerySyncRepository: GallerySyncRepository,
+    protected videoTrimRepository: VideoTrimRepository,
   ) {
     this.logger.setContext(this.constructor.name);
     this.storageCore = StorageCore.create(
@@ -370,6 +373,7 @@ export class BaseService {
       ctx.petFaceRepository,
       ctx.faceSearchRepository,
       ctx.gallerySyncRepository,
+      ctx.videoTrimRepository,
     );
 
     service.logger.setContext(BaseService.name);
